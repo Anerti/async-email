@@ -18,10 +18,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Table(
     name = "\"user\"",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"first_name", "last_name"})
-    }
-)
+    uniqueConstraints = {@UniqueConstraint(columnNames = {"first_name", "last_name"})})
 public class JUser {
 
   @Id
