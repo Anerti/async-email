@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: Async Email API
+  version: 1.0.0
+  description: Course subscription API
+
+paths:
+  /users/{userId}/courses/{courseId}:
+    post:
+      summary: Subscribe a user to a course
+      operationId: subscribeToCourse
+      tags: [UserCourses]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCourseResponse'
+        '404':
+          description: User or course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '409':
+          description: User already subscribed to this course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
+components:
+  schemas:
+    UserCourseResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        subscribedAt:
+          type: string
+          format: date-time
+
+    ErrorBody:
+      type: object
+      properties:
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
