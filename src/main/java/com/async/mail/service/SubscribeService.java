@@ -41,8 +41,7 @@ public class SubscribeService {
             .orElseThrow(
                 () ->
                     new ConflictException(
-                        String.format(
-                            "You are already subscribed in course %s", courseId)));
+                        String.format("You are already subscribed in course %s", courseId)));
 
     var emailEvent =
         SendEmailRequested.builder()
