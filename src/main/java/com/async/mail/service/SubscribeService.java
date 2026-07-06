@@ -1,0 +1,60 @@
+package com.async.mail.service;
+
+import com.async.mail.endpoint.event.EventProducer;
+import com.async.mail.endpoint.event.model.SendEmailRequested;
+import com.async.mail.endpoint.rest.controller.dto.UserCourseResponse;
+import com.async.mail.exception.ConflictException;
+import com.async.mail.exception.NotFoundException;
+import com.async.mail.repository.JCourseRepository;
+import com.async.mail.repository.JUserCourseRepository;
+import com.async.mail.repository.JUserRepository;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@AllArgsConstructor
+public class SubscribeService {
+
+  private final JUserRepository userRepository;
+  private final JCourseRepository courseRepository;
+  private final JUserCourseRepository userCourseRepository;
+  private final EventProducer<SendEmailRequested> eventProducer;
+
+  @Transactional
+  public UserCourseResponse subscribe(UUID userId, UUID courseId) {
+    var user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new NotFoundException(String.format("User %s not found", userId)));
+    var course =
+        courseRepository
+            .findById(courseId)
+            .orElseThrow(() -> new NotFoundException("Course not found: " + courseId));
+
+    var saved =
+        userCourseRepository
+            .insertOnConflictReturning(userId, courseId, Instant.now())
+            .orElseThrow(
+                () ->
+                    new ConflictException(
+                        String.format("You are already subscribed in course %s", courseId)));
+
+    var emailEvent =
+        SendEmailRequested.builder()
+            .to(user.getEmail())
+            .subject("Subscription to " + course.getTitle())
+            .htmlBody(
+                """
+                You have successfully subscribed to <b>%s</b>!<br>Start: %s<br>End: %s"""
+                    .formatted(course.getTitle(), course.getStartDate(), course.getEndDate()))
+            .build();
+    eventProducer.accept(List.of(emailEvent));
+
+    return new UserCourseResponse(
+        saved.getId(), saved.getUser().getId(), saved.getCourse().getId(), saved.getSubscribedAt());
+  }
+}
