@@ -14,11 +14,16 @@ src/main/java/com/async/mail/
 ├── exception/                     -- GlobalExceptionHandler + typed exceptions
 ├── mail/                          -- SES mailer, email verification, attachments
 ├── endpoint/                      -- REST controllers + EndpointConf
-│   └── rest/controller/health/    -- PingController, HealthEmailController
+│   ├── rest/controller/health/    -- PingController, HealthEmailController
+│   └── rest/controller/           -- HelloWorldController (/hello)
+│   ├── event/model/               -- PojaEvent, SendEmailRequested
+│   ├── event/consumer/            -- EventConsumer, EventServiceInvoker
+│   └── event/                     -- EventProducer, EventConf, EventStack
+├── service/event/                 -- SendEmailRequestedService (consumer)
 ├── file/hash/                     -- FileHash algorithm + model
 ├── file/zip/                      -- File type detection via Tika
-├── handler/                       -- LambdaHandler (AWS)
-├── concurrency/                   -- ThreadRenamer
+├── handler/                       -- LambdaHandler, MailboxEventHandler (AWS)
+├── concurrency/                   -- ThreadRenamer, Workers
 ├── datastructure/                 -- ListGrouper
 └── conf/                          -- test config classes
 
@@ -33,6 +38,14 @@ src/main/resources/
 ## Architecture
 
 Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. Security via JWT filter. OpenAPI-first (spec → generated code into `build/`). Deployed as AWS Lambda via `aws-serverless-java-container`.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES |
+| GET | `/ping` | Health check |
+| GET | `/health/email?to=` | Synchronous SES email test (5 variants) |
 
 ## Domain entities
 
@@ -73,6 +86,9 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 - Env-var-based config via `.env` (gitignored)
 - Tests use TestContainers (no local DB needed)
 - OpenAPI spec drives endpoint generation; generated code lands in `build/`
+- **Async email** via event-driven pipeline: `HelloWorldController` → `EventProducer<SendEmailRequested>` → EventBridge → SQS → `MailboxEventHandler` → `SendEmailRequestedService` → `Mailer` → SES
+- **SendEmailRequested** fields: `to` (required), `subject` (optional, fallback `""`), `htmlBody` (optional, fallback `"... world!"`)
+- `SendEmailRequestedService` implements `Consumer<SendEmailRequested>` — `@Service`, no `@Async`/`@EventListener`
 
 ## Common pitfalls
 
