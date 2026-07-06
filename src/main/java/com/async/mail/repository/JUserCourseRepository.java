@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface JUserCourseRepository extends JpaRepository<JUserCourse, UUID> {
 
-  @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query(
       value =
           """
