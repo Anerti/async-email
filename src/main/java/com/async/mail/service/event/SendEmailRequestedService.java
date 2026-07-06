@@ -24,7 +24,6 @@ public class SendEmailRequestedService implements Consumer<SendEmailRequested> {
   @Override
   public void accept(SendEmailRequested sendEmailRequested) {
     var recipientAddress = new InternetAddress(sendEmailRequested.getTo());
-    mailer.accept(
-        new Email(recipientAddress, List.of(), List.of(), "", "... world!", List.of()));
+    mailer.accept(new Email(recipientAddress, List.of(), List.of(), "", "... world!", List.of()));
   }
 }
