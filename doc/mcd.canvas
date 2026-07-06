@@ -1,0 +1,11 @@
+{
+	"nodes":[
+		{"id":"d289515522ffa6d3","type":"text","text":"# user_course\n\n- `id uuid pk`\n- `user_id uuid fk references user(id) not null`\n- `course_id uuid fk references course(id) not null`\n- `subscribed_at timestamp default now()`\n- `(user_id, course_id) unique`","x":-160,"y":-300,"width":500,"height":260},
+		{"id":"a55e392c04e9c3d7","type":"text","text":"# Course\n- `id uuid pk`\n- `title varchar(100) not null`\n- `start_date timestamp not null`\n- `end_date timestamp not null`\n","x":560,"y":-300,"width":400,"height":260},
+		{"id":"b31435b774ecaacf","type":"text","text":"# User\n- `id uuid pk`\n- `first_name varchar(100) not null`\n- `last_name varchar(100) not null`\n- `username varchar(50) unique not null`\n- `email varchar(100) unique not null`\n- `(first_name, last_name) unique`","x":-760,"y":-300,"width":400,"height":260}
+	],
+	"edges":[
+		{"id":"81ee1aaca4e488a6","fromNode":"b31435b774ecaacf","fromSide":"right","toNode":"d289515522ffa6d3","toSide":"left","toEnd":"none","label":"0,N"},
+		{"id":"8185af6006c42613","fromNode":"d289515522ffa6d3","fromSide":"right","toNode":"a55e392c04e9c3d7","toSide":"left","toEnd":"none","label":"0,N"}
+	]
+}
