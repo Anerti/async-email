@@ -39,5 +39,11 @@ out/
 .aws-sam
 **.toml
 
+### Env ###
+.env
+
+### Obsidian ###
+.obsidian/
+
 ### Mac OS ###
 .DS_Store
