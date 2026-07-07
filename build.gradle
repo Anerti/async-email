@@ -130,9 +130,6 @@ dependencies {
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
     implementation 'com.sun.activation:jakarta.activation:2.0.1'
 
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.2.2'
-    runtimeOnly 'org.postgresql:postgresql:42.7.1'
-
     implementation 'org.apache.tika:tika-core:2.9.1'
 
     implementation 'org.reflections:reflections:0.10.2'

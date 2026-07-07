@@ -41,10 +41,3 @@ out/
 
 ### Mac OS ###
 .DS_Store
-
-### Environment ###
-.env
-.env.local
-
-### Editor ###
-doc/.obsidian/
