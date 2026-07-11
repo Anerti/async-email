@@ -137,4 +137,28 @@ public class GlobalExceptionHandler {
                 .status(status.value())
                 .build());
   }
+
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<ErrorBody> handleUnauthorized(UnauthorizedException ex) {
+    HttpStatus status = HttpStatus.UNAUTHORIZED;
+    return ResponseEntity.status(status)
+        .body(
+            ErrorBody.builder()
+                .error("UNAUTHORIZED")
+                .message(ex.getMessage())
+                .status(status.value())
+                .build());
+  }
+
+  @ExceptionHandler(ForbiddenException.class)
+  public ResponseEntity<ErrorBody> handleForbidden(ForbiddenException ex) {
+    HttpStatus status = HttpStatus.FORBIDDEN;
+    return ResponseEntity.status(status)
+        .body(
+            ErrorBody.builder()
+                .error("FORBIDDEN")
+                .message(ex.getMessage())
+                .status(status.value())
+                .build());
+  }
 }
