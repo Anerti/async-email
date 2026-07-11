@@ -112,12 +112,7 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 ./gradlew test jacocoTestReport
 
 # Format
-./format.sh
-
-> **Note:** System default JDK is 26. Set `JAVA_HOME` to JDK 21 before any of the above:
-> ```bash
-> export JAVA_HOME=$HOME/.jdks/ms-21.0.11
-> ```
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 ```
 
 ## Conventions
@@ -138,11 +133,9 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 
 ## Common pitfalls
 
-- `format.sh` and Gradle require JDK 21 — system default is JDK 26. Always set `JAVA_HOME` first:
+- System default JDK is 26. `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11` — just run `./gradlew` directly. Only `format.sh` needs explicit `JAVA_HOME`:
   ```bash
-  export JAVA_HOME=$HOME/.jdks/ms-21.0.11
-  ./gradlew test
-  ./format.sh
+  JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
   ```
 - `user` is a reserved SQL keyword — always quoted as `"user"`
 - After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)

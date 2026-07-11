@@ -115,6 +115,12 @@ esac
 CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
 
+# ── Auto-detect JDK 21 ──────────────────────────────────────
+# The system default JDK is 26, but Gradle 8.5 requires JDK 21.
+if [ -z "$JAVA_HOME" ] && [ -x "$HOME/.jdks/ms-21.0.11/bin/java" ]; then
+    JAVA_HOME="$HOME/.jdks/ms-21.0.11"
+fi
+
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then

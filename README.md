@@ -8,7 +8,7 @@ Java 21 · Spring Boot 3.2.2 · PostgreSQL · JPA (Hibernate) · AWS Lambda/SQS/
 
 ## Prerequisites
 
-- Java 21 (system default is JDK 26 — set `JAVA_HOME` to JDK 21 before running Gradle or `format.sh`)
+- Java 21 (system default is JDK 26 — `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11`)
 - PostgreSQL 14+
 - Gradle (use `./gradlew`)
 
@@ -42,7 +42,6 @@ psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f src/main/resources/db/seed_course.s
 ### 4. Build & run
 
 ```bash
-export JAVA_HOME=$HOME/.jdks/ms-21.0.11   # system default is JDK 26
 ./gradlew build -x test
 ./gradlew bootRun    # → http://localhost:8080
 ```
@@ -50,7 +49,6 @@ export JAVA_HOME=$HOME/.jdks/ms-21.0.11   # system default is JDK 26
 ### 5. Run tests
 
 ```bash
-export JAVA_HOME=$HOME/.jdks/ms-21.0.11
 ./gradlew test
 ```
 
@@ -59,8 +57,7 @@ Tests use TestContainers — no local PostgreSQL needed. Service and controller 
 ### 6. Format code
 
 ```bash
-export JAVA_HOME=$HOME/.jdks/ms-21.0.11
-./format.sh
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 ```
 
 That's it — no other setup needed.
