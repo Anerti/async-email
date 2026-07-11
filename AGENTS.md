@@ -98,7 +98,7 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 # Compile only
 ./gradlew compileJava
 
-# Run all tests
+# Run tests
 ./gradlew test
 
 # Run specific test classes
@@ -111,8 +111,13 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 # Coverage
 ./gradlew test jacocoTestReport
 
-# Format (requires JDK 21 in JAVA_HOME)
-JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
+# Format
+./format.sh
+
+> **Note:** System default JDK is 26. Set `JAVA_HOME` to JDK 21 before any of the above:
+> ```bash
+> export JAVA_HOME=$HOME/.jdks/ms-21.0.11
+> ```
 ```
 
 ## Conventions
@@ -133,8 +138,12 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 
 ## Common pitfalls
 
-- `format.sh` requires JDK 21 — breaks with JDK 26. Use `JAVA_HOME=... ./format.sh` or run `$JAVA_HOME/bin/java -jar ...` directly; `format.sh` now honours `JAVA_HOME`
-- System default JDK is 26; `gradle.properties` pins `org.gradle.java.home=/home/anerti/.jdks/ms-21.0.11` so `./gradlew` always uses the right JDK
+- `format.sh` and Gradle require JDK 21 — system default is JDK 26. Always set `JAVA_HOME` first:
+  ```bash
+  export JAVA_HOME=$HOME/.jdks/ms-21.0.11
+  ./gradlew test
+  ./format.sh
+  ```
 - `user` is a reserved SQL keyword — always quoted as `"user"`
 - After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)
 - JaCoCo coverage verification runs after every test; exclude generated code via `**/gen/**`
