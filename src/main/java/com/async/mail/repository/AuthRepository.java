@@ -12,6 +12,11 @@ import org.springframework.stereotype.Repository;
 public interface AuthRepository extends JpaRepository<JUser, UUID> {
 
   @Query(
+      value = "SELECT id, first_name, last_name, username, email, password, role FROM \"user\" WHERE username = :username",
+      nativeQuery = true)
+  Optional<JUser> findByUsername(@Param("username") String username);
+
+  @Query(
       value =
           """
 INSERT INTO "user" (id, first_name, last_name, username, email, password, role)
@@ -20,8 +25,6 @@ ON CONFLICT DO NOTHING
 RETURNING id, first_name, last_name, username, email, password, role
 """,
       nativeQuery = true)
-  Optional<JUser> findByUsername(String username);
-
   Optional<JUser> create(
       @Param("firstName") String firstName,
       @Param("lastName") String lastName,

@@ -133,10 +133,11 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 
 ## Common pitfalls
 
-- System default JDK is 26. `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11` — just run `./gradlew` directly. Only `format.sh` needs explicit `JAVA_HOME`:
+- System default JDK is 26. `gradle.properties` pins `org.gradle.java.home` to JDK 21 (`~/.jdks/ms-21.0.11`) — just run `./gradlew` directly. Only `format.sh` needs explicit `JAVA_HOME`:
   ```bash
   JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
   ```
+- If the Poja bot rewrites `build.gradle` and drops custom deps, it may also drop `gradle.properties` — recreate it if `compileJava` fails with a Lombok `NoSuchFieldException`.
 - `user` is a reserved SQL keyword — always quoted as `"user"`
 - After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)
 - JaCoCo coverage verification runs after every test; exclude generated code via `**/gen/**`

@@ -40,6 +40,6 @@ public class AuthController {
     String token =
         tokenProvider.generateToken(userResponse.id().toString(), userResponse.role().name());
 
-    return ResponseEntity.ok(AuthResponse.builder().token(token).user(userResponse).build());
+    return ResponseEntity.status(HttpStatus.OK).body(AuthResponse.builder().token(token).user(userResponse).build());
   }
 }
