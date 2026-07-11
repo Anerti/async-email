@@ -46,7 +46,7 @@ class AuthControllerLoginTest {
   // ── 200 OK ──────────────────────────────────────────────────
 
   @Test
-  void test1_200_valid_credentials() throws Exception {
+  void test1_200_valid_customer() throws Exception {
     var userId = UUID.randomUUID();
     var userResponse =
         new UserResponse(userId, "John", "Doe", "john_doe", "john.doe@test.com", UserRole.CUSTOMER);
@@ -69,6 +69,32 @@ class AuthControllerLoginTest {
         .andExpect(jsonPath("$.user.id").value(userId.toString()))
         .andExpect(jsonPath("$.user.username").value("john_doe"))
         .andExpect(jsonPath("$.user.role").value("CUSTOMER"));
+  }
+
+  @Test
+  void test2_200_valid_admin() throws Exception {
+    var userId = UUID.randomUUID();
+    var userResponse =
+        new UserResponse(userId, "Admin", "User", "admin_user", "admin@test.com", UserRole.ADMIN);
+
+    when(authService.logIn(any(LoginRequest.class))).thenReturn(userResponse);
+    when(tokenProvider.generateToken(userId.toString(), "ADMIN")).thenReturn("jwt-token");
+
+    var request = new LoginRequest("admin_user", "TestPass1!");
+
+    mockMvc
+        .perform(
+            post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").value("jwt-token"))
+        .andExpect(jsonPath("$.user.email").value("admin@test.com"))
+        .andExpect(jsonPath("$.user.firstName").value("Admin"))
+        .andExpect(jsonPath("$.user.lastName").value("User"))
+        .andExpect(jsonPath("$.user.id").value(userId.toString()))
+        .andExpect(jsonPath("$.user.username").value("admin_user"))
+        .andExpect(jsonPath("$.user.role").value("ADMIN"));
   }
 
   // ── 401 UNAUTHORIZED ─────────────────────────────────────────
