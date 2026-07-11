@@ -66,6 +66,8 @@ paths:
       summary: Subscribe a user to a course
       operationId: subscribeToCourse
       tags: [UserCourses]
+      security:
+        - BearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -100,10 +102,15 @@ paths:
                 $ref: '#/components/schemas/ErrorBody'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     SignUpRequest:
       type: object
-      required: [firstName, lastName, username, email, password]
+      required: [firstName, lastName, username, email, password, confirmPassword]
       properties:
         firstName:
           type: string
@@ -119,6 +126,10 @@ components:
           format: email
           maxLength: 100
         password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        confirmPassword:
           type: string
           minLength: 8
           maxLength: 128
