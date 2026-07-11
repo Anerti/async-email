@@ -12,7 +12,9 @@ import org.springframework.stereotype.Repository;
 public interface AuthRepository extends JpaRepository<JUser, UUID> {
 
   @Query(
-      value = "SELECT id, first_name, last_name, username, email, password, role FROM \"user\" WHERE username = :username",
+      value =
+          "SELECT id, first_name, last_name, username, email, password, role FROM \"user\" WHERE"
+              + " username = :username",
       nativeQuery = true)
   Optional<JUser> findByUsername(@Param("username") String username);
 
