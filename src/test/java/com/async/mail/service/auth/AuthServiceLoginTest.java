@@ -119,5 +119,28 @@ class AuthServiceLoginTest {
       var request = new LoginRequest("john_doe", "");
       assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
     }
+
+    // ── username format ────────────────────────────────────────
+
+    @Test
+    void test8_username_with_at_sign() {
+      var request = new LoginRequest("john@doe", "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("can only contain letters"));
+    }
+
+    @Test
+    void test9_username_with_hyphen() {
+      var request = new LoginRequest("john-doe", "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("can only contain letters"));
+    }
+
+    @Test
+    void test10_username_too_long() {
+      var request = new LoginRequest("u".repeat(51), "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("longer than 50"));
+    }
   }
 }
