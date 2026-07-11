@@ -127,7 +127,65 @@ class AuthControllerLoginTest {
   }
 
   @Test
-  void test5_422_null_password() throws Exception {
+  void test5_422_username_with_at_sign() throws Exception {
+    when(authService.logIn(any(LoginRequest.class)))
+        .thenThrow(
+            new UnprocessableEntityException(
+                "Username can only contain letters (a-z, A-Z), "
+                    + "digits (0-9) and underscores."));
+
+    var request = new LoginRequest("john@doe", "TestPass1!");
+
+    mockMvc
+        .perform(
+            post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnprocessableEntity())
+        .andExpect(jsonPath("$.status").value(422))
+        .andExpect(jsonPath("$.error").value("UNPROCESSABLE_ENTITY"));
+  }
+
+  @Test
+  void test6_422_username_with_hyphen() throws Exception {
+    when(authService.logIn(any(LoginRequest.class)))
+        .thenThrow(
+            new UnprocessableEntityException(
+                "Username can only contain letters (a-z, A-Z), "
+                    + "digits (0-9) and underscores."));
+
+    var request = new LoginRequest("john-doe", "TestPass1!");
+
+    mockMvc
+        .perform(
+            post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnprocessableEntity())
+        .andExpect(jsonPath("$.status").value(422))
+        .andExpect(jsonPath("$.error").value("UNPROCESSABLE_ENTITY"));
+  }
+
+  @Test
+  void test7_422_username_too_long() throws Exception {
+    when(authService.logIn(any(LoginRequest.class)))
+        .thenThrow(
+            new UnprocessableEntityException("username cannot be longer than 50 characters."));
+
+    var request = new LoginRequest("u".repeat(51), "TestPass1!");
+
+    mockMvc
+        .perform(
+            post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnprocessableEntity())
+        .andExpect(jsonPath("$.status").value(422))
+        .andExpect(jsonPath("$.error").value("UNPROCESSABLE_ENTITY"));
+  }
+
+  @Test
+  void test8_422_null_password() throws Exception {
     when(authService.logIn(any(LoginRequest.class)))
         .thenThrow(new UnprocessableEntityException("password is required and cannot be blank."));
 
@@ -144,7 +202,7 @@ class AuthControllerLoginTest {
   }
 
   @Test
-  void test6_422_blank_password() throws Exception {
+  void test9_422_blank_password() throws Exception {
     when(authService.logIn(any(LoginRequest.class)))
         .thenThrow(new UnprocessableEntityException("password is required and cannot be blank."));
 
