@@ -1,6 +1,10 @@
 # Async Email
 
-Spring Boot REST API for asynchronous email handling via AWS SES.
+Spring Boot REST API for course subscription and asynchronous email handling via AWS SES.
+
+## Stack
+
+Java 21 · Spring Boot 3.2.2 · PostgreSQL · JPA (Hibernate) · AWS Lambda/SQS/SES/EventBridge · Gradle 8.5 · Lombok · OpenAPI (codegen) · JaCoCo · TestContainers
 
 ## Prerequisites
 
@@ -49,6 +53,21 @@ psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f src/main/resources/db/seed_course.s
 ```
 
 Tests use TestContainers — no local PostgreSQL needed.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/signup` | Register a new user account |
+| POST | `/auth/login` | Authenticate and receive a JWT token |
+| POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (requires JWT) |
+| GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES |
+| GET | `/ping` | Health check |
+| GET | `/health/email?to=` | Synchronous SES email test |
+
+## API spec
+
+OpenAPI 3.0.3 spec is at [`doc/api.yml`](doc/api.yml). It drives code generation into `build/`.
 
 ---
 
