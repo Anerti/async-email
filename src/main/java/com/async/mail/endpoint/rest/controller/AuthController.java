@@ -32,9 +32,6 @@ public class AuthController {
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(
-            AuthResponse.builder()
-                .token(token)
-                .user(userMapper.toAuthUser(userResponse))
-                .build());
+            AuthResponse.builder().token(token).user(userMapper.toAuthUser(userResponse)).build());
   }
 }

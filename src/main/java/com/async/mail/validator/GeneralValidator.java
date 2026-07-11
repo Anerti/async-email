@@ -45,13 +45,11 @@ public class GeneralValidator {
       if (!ALLOWED_EMAIL_CHAR.matcher(email).matches()) {
         throw new UnprocessableEntityException(
             String.format(
-                "Invalid input for email: '%s' only a-zA-Z0-9@_.- characters are allowed.",
-                email));
+                "Invalid input for email: '%s' only a-zA-Z0-9@_.- characters are allowed.", email));
       }
 
       if (!VALID_EMAIL_PATTERN.matcher(email).matches()) {
-        throw new UnprocessableEntityException(
-            String.format("Invalid email format: '%s'", email));
+        throw new UnprocessableEntityException(String.format("Invalid email format: '%s'", email));
       }
     }
   }
