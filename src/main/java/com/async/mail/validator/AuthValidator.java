@@ -1,5 +1,6 @@
 package com.async.mail.validator;
 
+import com.async.mail.endpoint.rest.controller.dto.LoginRequest;
 import com.async.mail.endpoint.rest.controller.dto.SignUpRequest;
 import com.async.mail.exception.UnprocessableEntityException;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,10 @@ public class AuthValidator {
     if (!request.password().equals(request.confirmPassword())) {
       throw new UnprocessableEntityException("Passwords do not match.");
     }
+  }
+
+  public void validateLogin(LoginRequest request) {
+    generalValidator.checkNull("username", request.username());
+    generalValidator.checkNull("password", request.password());
   }
 }

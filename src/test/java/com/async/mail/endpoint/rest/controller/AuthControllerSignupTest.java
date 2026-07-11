@@ -13,7 +13,6 @@ import com.async.mail.entity.enums.UserRole;
 import com.async.mail.exception.ConflictException;
 import com.async.mail.exception.GlobalExceptionHandler;
 import com.async.mail.exception.UnprocessableEntityException;
-import com.async.mail.mapper.UserMapper;
 import com.async.mail.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -40,8 +39,7 @@ class AuthControllerSignupTest {
   void setUp() {
     objectMapper = new ObjectMapper();
     mockMvc =
-        MockMvcBuilders.standaloneSetup(
-                new AuthController(tokenProvider, authService, new UserMapper()))
+        MockMvcBuilders.standaloneSetup(new AuthController(tokenProvider, authService))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
   }

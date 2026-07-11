@@ -20,6 +20,8 @@ ON CONFLICT DO NOTHING
 RETURNING id, first_name, last_name, username, email, password, role
 """,
       nativeQuery = true)
+  Optional<JUser> findByUsername(String username);
+
   Optional<JUser> create(
       @Param("firstName") String firstName,
       @Param("lastName") String lastName,
