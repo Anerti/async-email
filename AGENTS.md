@@ -93,23 +93,23 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 
 ```bash
 # Build (skip tests)
-./gradlew build -x test
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew build -x test
 
 # Compile only
-./gradlew compileJava
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew compileJava
 
 # Run tests
-./gradlew test
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew test
 
 # Run specific test classes
-./gradlew test --tests "com.async.mail.service.auth.*"
-./gradlew test --tests "com.async.mail.endpoint.rest.controller.*"
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew test --tests "com.async.mail.service.auth.*"
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew test --tests "com.async.mail.endpoint.rest.controller.*"
 
 # Run app
-./gradlew bootRun           # → http://localhost:8080
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew bootRun           # → http://localhost:8080
 
 # Coverage
-./gradlew test jacocoTestReport
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew test jacocoTestReport
 
 # Format
 JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
@@ -133,10 +133,12 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 
 ## Common pitfalls
 
-- System default JDK is 26. `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11` — just run `./gradlew` directly. Only `format.sh` needs explicit `JAVA_HOME`:
+- System default JDK is 26. `gradle.properties` no longer pins `org.gradle.java.home` (Gradle 8.5 rejects it when the wrapper runs on JDK 26). Always prefix `./gradlew` commands with `JAVA_HOME=$HOME/.jdks/ms-21.0.11` — see **Common commands** above.
+- Only `format.sh` needs explicit `JAVA_HOME` as well:
   ```bash
   JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
   ```
+- If the Poja bot rewrites `build.gradle` and drops custom deps, it may also drop `gradle.properties` — recreate it if `compileJava` fails with a Lombok `NoSuchFieldException`.
 - `user` is a reserved SQL keyword — always quoted as `"user"`
 - After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)
 - JaCoCo coverage verification runs after every test; exclude generated code via `**/gen/**`

@@ -130,6 +130,7 @@ dependencies {
     implementation 'software.amazon.awssdk:core:2.21.40'
 
     implementation 'org.springframework.boot:spring-boot-starter-security:3.2.2'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'

@@ -35,6 +35,7 @@ public class AuthValidator {
 
   public void validateLogin(LoginRequest request) {
     generalValidator.checkNull("username", request.username());
+    generalValidator.validateUsername(request.username());
     generalValidator.checkNull("password", request.password());
   }
 }

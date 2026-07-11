@@ -45,7 +45,7 @@ class AuthServiceLoginTest {
   class Success200 {
 
     @Test
-    void test1_valid_credentials() {
+    void test1_valid_customer() {
       var request = new LoginRequest("john_doe", "TestPass1!");
       var jUser = new JUser();
       jUser.setPassword("encoded-password");
@@ -61,6 +61,25 @@ class AuthServiceLoginTest {
 
       assertEquals(userResponse, result);
       verify(authRepository).findByUsername("john_doe");
+    }
+
+    @Test
+    void test2_valid_admin() {
+      var request = new LoginRequest("admin_user", "TestPass1!");
+      var jUser = new JUser();
+      jUser.setPassword("encoded-password");
+      var userResponse =
+          new UserResponse(
+              UUID.randomUUID(), "Admin", "User", "admin_user", "admin@test.com", UserRole.ADMIN);
+
+      when(authRepository.findByUsername("admin_user")).thenReturn(Optional.of(jUser));
+      when(passwordEncoder.matches("TestPass1!", "encoded-password")).thenReturn(true);
+      when(userMapper.toResponse(jUser)).thenReturn(userResponse);
+
+      var result = authService.logIn(request);
+
+      assertEquals(userResponse, result);
+      verify(authRepository).findByUsername("admin_user");
     }
   }
 
@@ -118,6 +137,29 @@ class AuthServiceLoginTest {
     void test7_blank_password() {
       var request = new LoginRequest("john_doe", "");
       assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+    }
+
+    // ── username format ────────────────────────────────────────
+
+    @Test
+    void test8_username_with_at_sign() {
+      var request = new LoginRequest("john@doe", "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("can only contain letters"));
+    }
+
+    @Test
+    void test9_username_with_hyphen() {
+      var request = new LoginRequest("john-doe", "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("can only contain letters"));
+    }
+
+    @Test
+    void test10_username_too_long() {
+      var request = new LoginRequest("u".repeat(51), "TestPass1!");
+      var ex = assertThrows(UnprocessableEntityException.class, () -> authService.logIn(request));
+      assertTrue(ex.getMessage().toLowerCase().contains("longer than 50"));
     }
   }
 }

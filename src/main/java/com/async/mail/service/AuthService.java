@@ -46,6 +46,7 @@ public class AuthService {
                         request.username(), request.email())));
   }
 
+  @Transactional(readOnly = true)
   public UserResponse logIn(LoginRequest request) {
     authValidator.validateLogin(request);
 
