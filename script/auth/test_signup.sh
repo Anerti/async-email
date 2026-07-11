@@ -6,7 +6,7 @@ curlie POST "http://localhost:8080/auth/signup" firstName="John" lastName="Doe" 
 echo
 
 echo "── 2) 201 — POST /auth/signup (accented names)  →  201 / token+user"
-curlie POST "http://localhost:8080/auth/signup" firstName="Jéan" lastName="Döe" username="jean_doe" email="jean.doe@test.com" password="TestPass1!" confirmPassword="TestPass1!"
+curlie POST "http://localhost:8080/auth/signup" firstName="Jéan" lastName="Doe" username="jean_doe" email="jean.doe@test.com" password="TestPass1!" confirmPassword="TestPass1!"
 echo
 
 echo "── 3) 409 — POST /auth/signup (duplicate username from test 1)  →  409 / already taken"

@@ -37,6 +37,6 @@ public class JUserCourse {
   @JoinColumn(name = "course_id", nullable = false)
   private JCourse course;
 
-  @Column(name = "subscribed_at", columnDefinition = "TIMESTAMP DEFAULT now()")
+  @Column(name = "subscribed_at")
   private Instant subscribedAt;
 }
