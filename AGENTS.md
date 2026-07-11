@@ -11,20 +11,31 @@ src/main/java/com/async/mail/
 ├── PojaApplication.java              -- entry point
 ├── entity/                           -- domain records (User, Course, UserCourse)
 ├── repository/model/                 -- JPA entities (JUser, JCourse, JUserCourse)
-├── repository/                       -- JPA repositories (JUserRepository, …)
+├── repository/                       -- JPA repositories (JUserRepository, AuthRepository)
 ├── exception/                        -- GlobalExceptionHandler + typed exceptions
 ├── mail/                             -- SES mailer, email verification, attachments
+├── config/
+│   ├── SecurityConfig.java           -- HTTP security filter chain
+│   ├── JwtAuthenticationFilter.java  -- JWT extraction & validation filter
+│   └── JwtTokenProvider.java         -- Token generation/validation
+├── mapper/
+│   └── UserMapper.java               -- JUser → UserResponse
+├── validator/
+│   ├── AuthValidator.java            -- SignUpRequest validation rules
+│   └── GeneralValidator.java         -- Shared validation utilities
 ├── endpoint/
 │   ├── rest/controller/
 │   │   ├── health/                   -- PingController, HealthEmailController
+│   │   ├── AuthController.java       -- POST /auth/signup
 │   │   ├── HelloWorldController      -- /hello (async email trigger)
 │   │   ├── SubscribeController       -- POST /users/{userId}/courses/{courseId}
-│   │   └── dto/                      -- UserCourseResponse
+│   │   └── dto/                      -- SignUpRequest, AuthResponse, UserResponse, …
 │   ├── event/model/                  -- PojaEvent, SendEmailRequested
 │   ├── event/consumer/               -- EventConsumer, EventServiceInvoker
 │   └── event/                        -- EventProducer, EventConf, EventStack
 ├── service/
 │   ├── event/                        -- SendEmailRequestedService (consumer)
+│   ├── AuthService.java              -- signUp logic with validation + persistence
 │   └── SubscribeService              -- subscription logic with async email
 ├── file/hash/                        -- FileHash algorithm + model
 ├── file/zip/                         -- File type detection via Tika
@@ -32,6 +43,13 @@ src/main/java/com/async/mail/
 ├── concurrency/                      -- ThreadRenamer, Workers
 ├── datastructure/                    -- ListGrouper
 └── conf/                             -- test config classes
+
+src/test/java/com/async/mail/
+├── service/auth/
+│   └── AuthServiceSignupTest.java    -- 32 service-layer signup tests
+├── endpoint/rest/controller/
+│   └── AuthControllerSignupTest.java -- 32 controller-layer signup tests
+└── conf/                             -- FacadeIT, EventConf, …
 
 src/main/resources/
 ├── db/
@@ -47,7 +65,7 @@ doc/
 
 ## Architecture
 
-Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. Security via JWT filter (spec defined, not yet implemented in Java). OpenAPI-first (spec → generated code into `build/`). Deployed as AWS Lambda via `aws-serverless-java-container`.
+Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. JWT-based auth via servlet filter chain. OpenAPI-first (spec → generated code into `build/`). Deployed as AWS Lambda via `aws-serverless-java-container`.
 
 ## Endpoints
 
@@ -60,7 +78,8 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 | GET | `/ping` | Health check | No |
 | GET | `/health/email?to=` | Synchronous SES email test (5 variants) | No |
 
-> **Note:** Auth endpoints (`/auth/signup`, `/auth/login`) and JWT security filter are defined in the OpenAPI spec at `doc/api.yml` but not yet implemented in Java.
+> **Status:** `/auth/signup` is fully implemented (controller + service + validator + JWT response).  
+> `/auth/login` and the remaining JWT security filter wiring are defined in the OpenAPI spec at `doc/api.yml` but not yet implemented in Java.
 
 ## Domain entities
 
@@ -82,6 +101,10 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 # Run tests
 ./gradlew test
 
+# Run specific test classes
+./gradlew test --tests "com.async.mail.service.auth.*"
+./gradlew test --tests "com.async.mail.endpoint.rest.controller.*"
+
 # Run app
 ./gradlew bootRun           # → http://localhost:8080
 
@@ -89,7 +112,7 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 ./gradlew test jacocoTestReport
 
 # Format
-./format.sh
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 ```
 
 ## Conventions
@@ -101,6 +124,8 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 - Env-var-based config via `.env` (gitignored)
 - Tests use TestContainers (no local DB needed)
 - OpenAPI spec drives endpoint generation; generated code lands in `build/`
+- **Testing pattern** by layer: service tests (real validators + mocked repository) and controller tests (MockMvc + mocked service) — both with `GlobalExceptionHandler` wired
+- Each bash end-to-end test script is transcribed 1:1 into JUnit (32 cases per endpoint: service + controller = 64 tests)
 - **Async email** via event-driven pipeline: `HelloWorldController` → `EventProducer<SendEmailRequested>` → EventBridge → SQS → `MailboxEventHandler` → `SendEmailRequestedService` → `Mailer` → SES
 - **SendEmailRequested** fields: `to` (required), `subject` (optional, fallback `""`), `htmlBody` (optional, fallback `"... world!"`)
 - `SendEmailRequestedService` implements `Consumer<SendEmailRequested>` — `@Service`, no `@Async`/`@EventListener`
@@ -108,7 +133,10 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 
 ## Common pitfalls
 
-- `format.sh` requires JDK 21 — breaks with JDK 26
+- System default JDK is 26. `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11` — just run `./gradlew` directly. Only `format.sh` needs explicit `JAVA_HOME`:
+  ```bash
+  JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
+  ```
 - `user` is a reserved SQL keyword — always quoted as `"user"`
 - After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)
 - JaCoCo coverage verification runs after every test; exclude generated code via `**/gen/**`

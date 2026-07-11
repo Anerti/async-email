@@ -4,11 +4,11 @@ Spring Boot REST API for course subscription and asynchronous email handling via
 
 ## Stack
 
-Java 21 · Spring Boot 3.2.2 · PostgreSQL · JPA (Hibernate) · AWS Lambda/SQS/SES/EventBridge · Gradle 8.5 · Lombok · OpenAPI (codegen) · JaCoCo · TestContainers
+Java 21 · Spring Boot 3.2.2 · PostgreSQL · JPA (Hibernate) · AWS Lambda/SQS/SES/EventBridge · Gradle 8.5 · Lombok · OpenAPI (codegen) · JaCoCo · TestContainers · JUnit 5 · Mockito 5
 
 ## Prerequisites
 
-- Java 21
+- Java 21 (system default is JDK 26 — `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11`)
 - PostgreSQL 14+
 - Gradle (use `./gradlew`)
 
@@ -52,7 +52,33 @@ psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f src/main/resources/db/seed_course.s
 ./gradlew test
 ```
 
-Tests use TestContainers — no local PostgreSQL needed.
+Tests use TestContainers — no local PostgreSQL needed. Service and controller layers are tested separately (64 JUnit tests total for `/auth/signup`).
+
+### 6. Format code
+
+```bash
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
+```
+
+That's it — no other setup needed.
+
+## Project layout
+
+```text
+src/main/java/com/async/mail/
+├── config/               Security config, JWT filter, token provider
+├── endpoint/rest/        AuthController, HelloWorldController, …
+├── service/              AuthService, SubscribeService, …
+├── validator/            AuthValidator, GeneralValidator
+├── repository/           JPA repositories (AuthRepository, …)
+├── mapper/               UserMapper (JUser → UserResponse)
+└── ...
+
+src/test/java/com/async/mail/
+├── service/auth/         AuthServiceSignupTest (32 cases)
+├── endpoint/rest/        AuthControllerSignupTest (32 cases)
+└── conf/                 FacadeIT, EventConf, …
+```
 
 ## Endpoints
 

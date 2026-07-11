@@ -1,7 +1,10 @@
 package com.async.mail.repository.model;
 
+import com.async.mail.entity.enums.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,4 +39,11 @@ public class JUser {
 
   @Column(length = 100, nullable = false, unique = true)
   private String email;
+
+  @Column(length = 255, nullable = false)
+  private String password;
+
+  @Enumerated(EnumType.STRING)
+  @Column(length = 20, nullable = false)
+  private UserRole role = UserRole.CUSTOMER;
 }
