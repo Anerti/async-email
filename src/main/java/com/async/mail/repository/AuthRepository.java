@@ -15,8 +15,10 @@ public interface AuthRepository extends JpaRepository<JUser, UUID> {
       value =
           """
 INSERT INTO "user" (id, first_name, last_name, username, email, password, role)
-VALUES (gen_random_uuid(), :firstName, :lastName, :username, :email, :password, CAST(:role AS user_role))
-ON CONFLICT (username) DO NOTHING
+SELECT gen_random_uuid(), :firstName, :lastName, :username, :email, :password, CAST(:role AS user_role)
+WHERE NOT EXISTS (
+    SELECT 1 FROM "user" WHERE username = :username OR email = :email
+)
 RETURNING id, first_name, last_name, username, email, password, role
 """,
       nativeQuery = true)
