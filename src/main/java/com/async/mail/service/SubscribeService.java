@@ -34,8 +34,6 @@ public class SubscribeService {
   private final EventProducer<SendEmailRequested> eventProducer;
   private final ResourcesAccessRules resourcesAccessRules;
   private final InvoiceService invoiceService;
-  private final S3Service s3Service;
-  private final QrCodeService qrCodeService;
 
   private static String emailTemplate() {
     try {
@@ -83,7 +81,9 @@ public class SubscribeService {
                     new ConflictException(
                         String.format("You are already subscribed in course %s", courseId)));
 
-    var qrImageUrl = generateInvoiceQrImageUrl(user, course, userId, courseId);
+    var attachment = generateInvoiceAttachment(user, course);
+    var attachments =
+        attachment != null ? List.of(attachment) : List.<SendEmailRequested.Attachment>of();
 
     var emailEvent =
         SendEmailRequested.builder()
@@ -97,31 +97,32 @@ public class SubscribeService {
                         course.getTitle(),
                         course.getTitle(),
                         course.getStartDate(),
-                        course.getEndDate(),
-                        qrImageUrl))
+                        course.getEndDate()))
+            .attachments(attachments)
             .build();
+
     eventProducer.accept(List.of(emailEvent));
 
     return new UserCourseResponse(
         saved.getId(), saved.getUser().getId(), saved.getCourse().getId(), saved.getSubscribedAt());
   }
 
-  private String generateInvoiceQrImageUrl(User user, JCourse course, UUID userId, UUID courseId) {
+  private SendEmailRequested.Attachment generateInvoiceAttachment(User user, JCourse course) {
     var invoiceNumber = UUID.randomUUID().toString();
+
     try {
       var pdfBytes = invoiceService.generateInvoice(user, course, invoiceNumber);
-      var invoiceKey = s3Service.uploadInvoice(userId, courseId, pdfBytes);
-      var invoiceUrl = s3Service.generateDownloadUrl(invoiceKey);
-      var qrPng = qrCodeService.generateQrPngBytes(invoiceUrl.toString());
-      var qrKey = s3Service.uploadQrCode(userId, courseId, qrPng);
-      return s3Service.generateDownloadUrl(qrKey).toString();
+      return SendEmailRequested.Attachment.builder()
+          .filename("invoice-" + invoiceNumber + ".pdf")
+          .content(pdfBytes)
+          .build();
     } catch (Exception e) {
       log.warn(
-          "Failed to generate or upload invoice for user {} course {}: {}",
-          userId,
-          courseId,
+          "Failed to generate invoice for user {} course {}: {}",
+          user.id(),
+          course.getId(),
           e.getMessage());
-      return "";
+      return null;
     }
   }
 }
