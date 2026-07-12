@@ -26,4 +26,20 @@ public class QrCodeService {
       throw new RuntimeException("Failed to generate QR code", e);
     }
   }
+
+  public byte[] generateQrPngBytes(String url) {
+    return generateQrPngBytes(url, 200);
+  }
+
+  public byte[] generateQrPngBytes(String url, int size) {
+    try {
+      var writer = new QRCodeWriter();
+      var bitMatrix = writer.encode(url, BarcodeFormat.QR_CODE, size, size);
+      var outputStream = new ByteArrayOutputStream();
+      MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
+      return outputStream.toByteArray();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to generate QR code", e);
+    }
+  }
 }
