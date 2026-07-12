@@ -28,6 +28,7 @@ public class CourseController {
       @RequestParam(required = false) BigDecimal price,
       @RequestParam(defaultValue = "1") int page,
       @RequestParam(defaultValue = "10") int pageSize) {
-    return ResponseEntity.status(HttpStatus.OK).body(courseService.listCourses(title, startDate, endDate, price, page, pageSize));
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(courseService.listCourses(title, startDate, endDate, price, page, pageSize));
   }
 }

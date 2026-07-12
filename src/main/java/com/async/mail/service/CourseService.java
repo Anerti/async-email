@@ -34,6 +34,6 @@ public class CourseService {
 
     long total = courseRepository.countFiltered(title, startDate, endDate, price);
 
-    return new CourseListResponse(data, new Meta(page, size, total));
+    return new CourseListResponse(data.isEmpty() ? null : data, new Meta(page, size, total));
   }
 }
