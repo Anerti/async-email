@@ -100,7 +100,7 @@ public class SubscribeService {
                         course.getEndDate()))
             .attachments(attachments)
             .build();
-    
+
     eventProducer.accept(List.of(emailEvent));
 
     return new UserCourseResponse(
@@ -109,7 +109,7 @@ public class SubscribeService {
 
   private SendEmailRequested.Attachment generateInvoiceAttachment(User user, JCourse course) {
     var invoiceNumber = UUID.randomUUID().toString();
-    
+
     try {
       var pdfBytes = invoiceService.generateInvoice(user, course, invoiceNumber);
       return SendEmailRequested.Attachment.builder()
