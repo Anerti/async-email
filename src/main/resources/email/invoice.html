@@ -3,69 +3,84 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <style type="text/css">
-  @page { margin: 30px; }
+  @page { margin: 40px; }
   body {
     font-family: 'Helvetica', 'Arial', sans-serif;
-    color: #C8D0D8;
-    font-size: 11pt;
+    color: #D1D9E6;
+    font-size: 10pt;
     margin: 0;
     padding: 0;
-    line-height: 1.5;
+    line-height: 1.6;
     background-color: #0F1923;
   }
   .header {
     border-bottom: 2px solid #9FEF00;
-    padding-bottom: 16px;
-    margin-bottom: 24px;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
   }
   .header h1 {
     color: #9FEF00;
-    font-size: 22pt;
-    margin: 0 0 4px 0;
+    font-size: 24pt;
+    margin: 0 0 6px 0;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
   }
   .header p {
     color: #8892B0;
-    margin: 0;
+    margin: 0 0 2px 0;
     font-size: 9pt;
   }
+  .header .company {
+    color: #6BB800;
+    font-size: 10pt;
+    font-weight: 500;
+  }
   .invoice-meta {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     width: 100%%;
   }
   .invoice-meta td {
-    padding: 3px 0;
+    padding: 4px 0;
     font-size: 10pt;
   }
   .invoice-meta td:first-child {
     color: #8892B0;
+    width: 120px;
   }
   .invoice-meta td:last-child {
     text-align: right;
     font-weight: 600;
     color: #FFFFFF;
   }
+  .section-title {
+    color: #8892B0;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 0 0 8px 0;
+    padding: 0;
+  }
   .items {
     width: 100%%;
     border-collapse: collapse;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
   .items th {
     background-color: #9FEF00;
     color: #0F1923;
-    padding: 8px 12px;
+    padding: 10px 16px;
     text-align: left;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
   }
   .items th:last-child {
     text-align: right;
   }
   .items td {
-    padding: 10px 12px;
+    padding: 12px 16px;
     border-bottom: 1px solid #2A3A4F;
     font-size: 10pt;
   }
@@ -73,22 +88,47 @@
     text-align: right;
     font-weight: 600;
   }
+  .items .description {
+    color: #D1D9E6;
+  }
+  .items .description small {
+    display: block;
+    color: #5A6A7E;
+    font-size: 8pt;
+    font-weight: 400;
+    margin-top: 2px;
+  }
   .total-row td {
     border-bottom: none !important;
-    padding-top: 12px;
+    padding-top: 16px;
+    padding-bottom: 0;
   }
   .total-row td:last-child {
-    font-size: 14pt;
+    font-size: 16pt;
     font-weight: 700;
     color: #9FEF00;
   }
+  .payment-info {
+    margin-bottom: 32px;
+    padding: 16px 20px;
+    background-color: #182232;
+    border: 1px solid #2A3A4F;
+    border-radius: 4px;
+    font-size: 9pt;
+    color: #8892B0;
+    line-height: 1.5;
+  }
+  .payment-info strong {
+    color: #D1D9E6;
+  }
   .footer {
     margin-top: 32px;
-    padding-top: 16px;
+    padding-top: 20px;
     border-top: 1px solid #2A3A4F;
     font-size: 8pt;
     color: #5A6A7E;
     text-align: center;
+    line-height: 1.7;
   }
 </style>
 </head>
@@ -96,7 +136,8 @@
 
 <div class="header">
   <h1>INVOICE</h1>
-  <p>Async Mail &#8212; Education Services</p>
+  <p class="company">Async Mail &mdash; Education Services</p>
+  <p>123 Learning Street &middot; San Francisco, CA 94105</p>
 </div>
 
 <table class="invoice-meta">
@@ -108,6 +149,10 @@
     <td>Date</td>
     <td>%s</td>
   </tr>
+</table>
+
+<h2 class="section-title">Billed To</h2>
+<table class="invoice-meta">
   <tr>
     <td>Customer</td>
     <td>%s %s</td>
@@ -118,13 +163,17 @@
   </tr>
 </table>
 
+<h2 class="section-title">Items</h2>
 <table class="items">
   <tr>
     <th>Description</th>
     <th>Amount</th>
   </tr>
   <tr>
-    <td>Course enrollment &#8212; %s</td>
+    <td class="description">
+      Course enrollment &mdash; %s
+      <small>One-time enrollment fee &middot; Non-refundable</small>
+    </td>
     <td>%s</td>
   </tr>
   <tr class="total-row">
@@ -133,9 +182,16 @@
   </tr>
 </table>
 
+<div class="payment-info">
+  <strong>Payment status:</strong> Paid &mdash; Thank you<br />
+  <strong>Invoice:</strong> %1$s
+</div>
+
 <div class="footer">
-  Async Mail &#8212; Thank you for your enrollment<br />
-  For any questions, contact support@async-mail.com
+  Async Mail &mdash; Education Services<br />
+  123 Learning Street, San Francisco, CA 94105<br />
+  support@async-mail.com &middot; www.async-mail.com<br />
+  Thank you for your enrollment
 </div>
 
 </body>

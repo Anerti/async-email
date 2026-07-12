@@ -133,7 +133,7 @@ paths:
           schema:
             type: number
             format: double
-          description: Filter by exact price
+          description: Maximum price the user can afford (filters courses with price ≤ this value)
         - name: page
           in: query
           required: false
@@ -149,7 +149,7 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
-            default: 20
+            default: 10
           description: Number of courses per page
       responses:
         '200':
