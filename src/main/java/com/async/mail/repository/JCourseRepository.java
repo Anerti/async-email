@@ -16,9 +16,9 @@ public interface JCourseRepository extends JpaRepository<JCourse, UUID> {
           """
           SELECT id, title, start_date, end_date, price FROM course
           WHERE (:title IS NULL OR :title = '' OR LOWER(title) LIKE LOWER('%' || :title || '%'))
-            AND (:startDate IS NULL OR start_date >= :startDate::timestamp)
-            AND (:endDate IS NULL OR end_date <= :endDate::timestamp)
-            AND (:price IS NULL OR price = :price::numeric)
+            AND (:startDate IS NULL OR start_date >= CAST(:startDate AS timestamp))
+            AND (:endDate IS NULL OR end_date <= CAST(:endDate AS timestamp))
+            AND (:price IS NULL OR price = CAST(:price AS numeric))
           ORDER BY title
           OFFSET :offset LIMIT :limit
           """,
@@ -36,9 +36,9 @@ public interface JCourseRepository extends JpaRepository<JCourse, UUID> {
           """
           SELECT count(*) FROM course
           WHERE (:title IS NULL OR :title = '' OR LOWER(title) LIKE LOWER('%' || :title || '%'))
-            AND (:startDate IS NULL OR start_date >= :startDate::timestamp)
-            AND (:endDate IS NULL OR end_date <= :endDate::timestamp)
-            AND (:price IS NULL OR price = :price::numeric)
+            AND (:startDate IS NULL OR start_date >= CAST(:startDate AS timestamp))
+            AND (:endDate IS NULL OR end_date <= CAST(:endDate AS timestamp))
+            AND (:price IS NULL OR price = CAST(:price AS numeric))
           """,
       nativeQuery = true)
   long countFiltered(
