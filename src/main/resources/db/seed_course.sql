@@ -16,4 +16,5 @@ VALUES ('abfbbc98-bab0-4d91-8c0f-974c20be5d95', 'Mathematics',                  
        ('6f2bea9d-b037-4901-b484-c2af281ab31e', 'IA1. Intelligence artificielle',                     '2026-09-01 09:00:00', '2027-01-15 17:00:00', 359.00),
        ('8155ea77-4a8a-4b94-b39b-847ac3a7f3c0', 'SYS1. Systèmes d''exploitation',                   '2026-09-01 09:00:00', '2027-01-15 17:00:00', 269.00),
        ('3715502e-eaab-4964-b94c-c8dc4d4620cd', 'MOB1. Développement d''applications mobiles',       '2026-09-01 09:00:00', '2027-01-15 17:00:00', 339.00),
-       ('479eb2d0-e7ee-4c63-b192-bc89de3f0848', 'THEORIE1. Mathématiques de l''informatique',        '2026-09-01 09:00:00', '2027-01-15 17:00:00', 239.00);
+       ('479eb2d0-e7ee-4c63-b192-bc89de3f0848', 'THEORIE1. Mathématiques de l''informatique',        '2026-09-01 09:00:00', '2027-01-15 17:00:00', 239.00)
+ON CONFLICT (id) DO NOTHING;
