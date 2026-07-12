@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # Test script for GET /courses endpoint
 
-echo "── 1) 200 — GET /courses (no filters)  →  200 / all 18 courses, page 1, size 20"
+echo "── 1) 200 — GET /courses (no filters)  →  200 / 10 courses (page 1 of 18), size 10"
 curlie GET "http://localhost:8080/courses"
 echo
 
@@ -13,7 +13,7 @@ echo "── 3) 200 — GET /courses?title=Algo (prefix match)  →  200 / 1 cou
 curlie GET "http://localhost:8080/courses" title=="Algo"
 echo
 
-echo "── 4) 200 — GET /courses?price=149.00 (exact price)  →  200 / 1 course"
+echo "── 4) 200 — GET /courses?price=149.00 (max price, user can afford)  →  200 / 1 course"
 curlie GET "http://localhost:8080/courses" price=="149.00"
 echo
 
