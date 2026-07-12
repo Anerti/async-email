@@ -11,18 +11,21 @@ import com.async.mail.exception.NotFoundException;
 import com.async.mail.repository.JCourseRepository;
 import com.async.mail.repository.JUserCourseRepository;
 import com.async.mail.repository.JUserRepository;
+import com.async.mail.repository.model.JCourse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class SubscribeService {
 
   private final JUserRepository userRepository;
@@ -30,6 +33,9 @@ public class SubscribeService {
   private final JUserCourseRepository userCourseRepository;
   private final EventProducer<SendEmailRequested> eventProducer;
   private final ResourcesAccessRules resourcesAccessRules;
+  private final InvoiceService invoiceService;
+  private final S3Service s3Service;
+  private final QrCodeService qrCodeService;
 
   private static String emailTemplate() {
     try {
@@ -75,6 +81,8 @@ public class SubscribeService {
                     new ConflictException(
                         String.format("You are already subscribed in course %s", courseId)));
 
+    var qrDataUri = generateInvoiceQrDataUri(user, course, userId, courseId);
+
     var emailEvent =
         SendEmailRequested.builder()
             .to(user.email())
@@ -85,11 +93,26 @@ public class SubscribeService {
                     course.getTitle(),
                     course.getTitle(),
                     course.getStartDate(),
-                    course.getEndDate()))
+                    course.getEndDate(),
+                    qrDataUri))
             .build();
     eventProducer.accept(List.of(emailEvent));
 
     return new UserCourseResponse(
         saved.getId(), saved.getUser().getId(), saved.getCourse().getId(), saved.getSubscribedAt());
+  }
+
+  private String generateInvoiceQrDataUri(User user, JCourse course, UUID userId, UUID courseId) {
+    var invoiceNumber = UUID.randomUUID().toString();
+    try {
+      var pdfBytes = invoiceService.generateInvoice(user, course, invoiceNumber);
+      var s3Key = s3Service.uploadInvoice(userId, courseId, pdfBytes);
+      var downloadUrl = s3Service.generateDownloadUrl(s3Key);
+      return qrCodeService.generateQrDataUri(downloadUrl.toString());
+    } catch (Exception e) {
+      log.warn("Failed to generate or upload invoice for user {} course {}: {}",
+          userId, courseId, e.getMessage());
+      return "";
+    }
   }
 }
