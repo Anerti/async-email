@@ -17,7 +17,9 @@ src/main/java/com/async/mail/
 ├── config/
 │   ├── SecurityConfig.java           -- HTTP security filter chain
 │   ├── JwtAuthenticationFilter.java  -- JWT extraction & validation filter
-│   └── JwtTokenProvider.java         -- Token generation/validation
+│   ├── JwtTokenProvider.java         -- Token generation/validation
+│   ├── S3Conf.java                   -- S3 client + presigner beans
+│   └── ResourcesAccessRules.java     -- Role-based resource access checks
 ├── mapper/
 │   └── UserMapper.java               -- JUser → UserResponse
 ├── validator/
@@ -35,8 +37,11 @@ src/main/java/com/async/mail/
 │   └── event/                        -- EventProducer, EventConf, EventStack
 ├── service/
 │   ├── event/                        -- SendEmailRequestedService (consumer)
-│   ├── AuthService.java              -- signUp logic with validation + persistence
-│   └── SubscribeService              -- subscription logic with async email
+│   ├── AuthService.java              -- signUp + logIn with validation + persistence
+│   ├── SubscribeService              -- subscription logic with async email
+│   ├── InvoiceService.java           -- HTML → PDF invoice generation
+│   ├── QrCodeService.java            -- QR code data URI generation
+│   └── S3Service.java                -- Upload invoices to S3, presigned download URLs
 ├── file/hash/                        -- FileHash algorithm + model
 ├── file/zip/                         -- File type detection via Tika
 ├── handler/                          -- LambdaHandler, MailboxEventHandler (AWS)
@@ -46,9 +51,11 @@ src/main/java/com/async/mail/
 
 src/test/java/com/async/mail/
 ├── service/auth/
-│   └── AuthServiceSignupTest.java    -- 32 service-layer signup tests
+│   ├── AuthServiceSignupTest.java    -- 32 service-layer signup tests
+│   └── AuthServiceLoginTest.java     -- service-layer login tests
 ├── endpoint/rest/controller/
-│   └── AuthControllerSignupTest.java -- 32 controller-layer signup tests
+│   ├── AuthControllerSignupTest.java -- 32 controller-layer signup tests
+│   └── AuthControllerLoginTest.java  -- controller-layer login tests
 └── conf/                             -- FacadeIT, EventConf, …
 
 src/main/resources/
@@ -73,13 +80,13 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 |--------|------|-------------|------|
 | POST | `/auth/signup` | Register a new user account | No |
 | POST | `/auth/login` | Authenticate and receive a JWT token | No |
-| POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (sends async email) | JWT |
+| POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (sends async email + invoice + QR) | JWT |
 | GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES | No |
 | GET | `/ping` | Health check | No |
 | GET | `/health/email?to=` | Synchronous SES email test (5 variants) | No |
 
-> **Status:** `/auth/signup` is fully implemented (controller + service + validator + JWT response).  
-> `/auth/login` and the remaining JWT security filter wiring are defined in the OpenAPI spec at `doc/api.yml` but not yet implemented in Java.
+> **Status:** `/auth/signup` and `/auth/login` are fully implemented (controller + service + validator + tests).  
+> Subscription (`POST /users/{userId}/courses/{courseId}`) triggers an async confirmation email with invoice PDF (S3) and QR code attachment.
 
 ## Domain entities
 
@@ -130,6 +137,9 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 - **SendEmailRequested** fields: `to` (required), `subject` (optional, fallback `""`), `htmlBody` (optional, fallback `"... world!"`)
 - `SendEmailRequestedService` implements `Consumer<SendEmailRequested>` — `@Service`, no `@Async`/`@EventListener`
 - Subscription triggers async confirmation email via the same event pipeline
+- **Subscribe test script** at `script/subscribe/test_subscribe.sh` — 10 end-to-end curl/curlie cases
+- **Invoice + QR**: subscription triggers a confirmation email with an invoice PDF (Flying Saucer) uploaded to S3 and a QR code data URI
+- **S3Service** uploads invoices and generates presigned download URLs (7-day expiry)
 
 ## Common pitfalls
 
@@ -140,5 +150,6 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
   ```
 - If the Poja bot rewrites `build.gradle` and drops custom deps, it may also drop `gradle.properties` — recreate it if `compileJava` fails with a Lombok `NoSuchFieldException`.
 - `user` is a reserved SQL keyword — always quoted as `"user"`
-- After the Poja deployment bot runs, `build.gradle` can lose custom deps (JPA, Lombok)
+- After the Poja deployment bot runs, `build.gradle` can lose custom deps (spring-data-jpa, postgresql, spring-security, jjwt, s3, flying-saucer, zxing, bcprov) — compare with `git diff HEAD build.gradle` and restore them
+- `.env` and `.obsidian/` entries in `.gitignore` are also removed by pojabot — re-add them after each deployment
 - JaCoCo coverage verification runs after every test; exclude generated code via `**/gen/**`

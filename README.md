@@ -8,7 +8,7 @@ Java 21 · Spring Boot 3.2.2 · PostgreSQL · JPA (Hibernate) · AWS Lambda/SQS/
 
 ## Prerequisites
 
-- Java 21 (system default is JDK 26 — `gradlew` auto-detects JDK 21 at `~/.jdks/ms-21.0.11`)
+- Java 21 (system default is JDK 26 — prefix `./gradlew` with `JAVA_HOME=$HOME/.jdks/ms-21.0.11`)
 - PostgreSQL 14+
 - Gradle (use `./gradlew`)
 
@@ -42,17 +42,17 @@ psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f src/main/resources/db/seed_course.s
 ### 4. Build & run
 
 ```bash
-./gradlew build -x test
-./gradlew bootRun    # → http://localhost:8080
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew build -x test
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew bootRun    # → http://localhost:8080
 ```
 
 ### 5. Run tests
 
 ```bash
-./gradlew test
+JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./gradlew test
 ```
 
-Tests use TestContainers — no local PostgreSQL needed. Service and controller layers are tested separately (64 JUnit tests total for `/auth/signup`).
+Tests use TestContainers — no local PostgreSQL needed. Service and controller layers are tested separately (64 JUnit tests for `/auth/signup`, plus login tests).
 
 ### 6. Format code
 
@@ -66,30 +66,43 @@ That's it — no other setup needed.
 
 ```text
 src/main/java/com/async/mail/
-├── config/               Security config, JWT filter, token provider
-├── endpoint/rest/        AuthController, HelloWorldController, …
-├── service/              AuthService, SubscribeService, …
+├── config/               Security config, JWT filter, token provider, S3 conf
+├── endpoint/rest/        AuthController, SubscribeController, HelloWorldController, …
+├── service/              AuthService, SubscribeService, InvoiceService, QrCodeService, S3Service
 ├── validator/            AuthValidator, GeneralValidator
-├── repository/           JPA repositories (AuthRepository, …)
+├── repository/           JPA repositories (AuthRepository, JUserCourseRepository, …)
 ├── mapper/               UserMapper (JUser → UserResponse)
 └── ...
 
 src/test/java/com/async/mail/
-├── service/auth/         AuthServiceSignupTest (32 cases)
-├── endpoint/rest/        AuthControllerSignupTest (32 cases)
+├── service/auth/         AuthServiceSignupTest (32), AuthServiceLoginTest
+├── endpoint/rest/        AuthControllerSignupTest (32), AuthControllerLoginTest
 └── conf/                 FacadeIT, EventConf, …
 ```
 
 ## Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/auth/signup` | Register a new user account |
-| POST | `/auth/login` | Authenticate and receive a JWT token |
-| POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (requires JWT) |
-| GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES |
-| GET | `/ping` | Health check |
-| GET | `/health/email?to=` | Synchronous SES email test |
+| Method | Path | Description | Auth |
+|--------|------|-------------|------|
+| POST | `/auth/signup` | Register a new user account | No |
+| POST | `/auth/login` | Authenticate and receive a JWT token | No |
+| POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (requires JWT) | JWT |
+| GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES | No |
+| GET | `/ping` | Health check | No |
+| GET | `/health/email?to=` | Synchronous SES email test | No |
+
+## Test scripts
+
+E2E test scripts for manual verification live in `script/`:
+
+| Script | Cases |
+|--------|-------|
+| [`script/subscribe/test_subscribe.sh`](script/subscribe/test_subscribe.sh) | 10 cases (happy path + auth errors + permission checks + not found + conflict) |
+
+## Caveats
+
+- **Poja deployment bot** (`poja[bot]`) rewrites `build.gradle` and `.gitignore`, stripping custom dependencies (spring-data-jpa, postgresql, spring-security, jjwt, s3, flying-saucer, zxing, bcprov) and removing `.env` / `.obsidian/` entries from `.gitignore`. After each deployment, run `git diff HEAD build.gradle` and restore missing lines.
+- System default JDK is 26; Gradle 8.5 rejects `org.gradle.java.home` in `gradle.properties`. All `./gradlew` commands must be prefixed with `JAVA_HOME=$HOME/.jdks/ms-21.0.11`.
 
 ## API spec
 
