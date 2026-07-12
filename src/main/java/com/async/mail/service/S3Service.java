@@ -43,11 +43,7 @@ public class S3Service {
   public String uploadQrCode(UUID userId, UUID courseId, byte[] pngContent) {
     var key = String.format("qrcodes/%s/%s/%d.png", userId, courseId, System.currentTimeMillis());
     var request =
-        PutObjectRequest.builder()
-            .bucket(invoiceBucket)
-            .key(key)
-            .contentType("image/png")
-            .build();
+        PutObjectRequest.builder().bucket(invoiceBucket).key(key).contentType("image/png").build();
     s3Client.putObject(request, RequestBody.fromBytes(pngContent));
     return key;
   }
