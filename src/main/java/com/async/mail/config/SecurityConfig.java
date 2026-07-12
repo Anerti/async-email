@@ -38,6 +38,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/health/**")
                     .permitAll()
+                    .requestMatchers("/users/*/courses/*")
+                    .hasRole("CUSTOMER")
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

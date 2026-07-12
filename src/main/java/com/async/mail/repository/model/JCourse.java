@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
@@ -31,4 +32,7 @@ public class JCourse {
 
   @Column(name = "end_date", nullable = false)
   private Instant endDate;
+
+  @Column(precision = 10, scale = 2, nullable = false)
+  private BigDecimal price;
 }

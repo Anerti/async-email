@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS course (
     id         UUID PRIMARY KEY,
     title      VARCHAR(100) NOT NULL,
     start_date TIMESTAMP    NOT NULL,
-    end_date   TIMESTAMP    NOT NULL
+    end_date   TIMESTAMP    NOT NULL,
+    price      NUMERIC(10,2) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS user_course (
