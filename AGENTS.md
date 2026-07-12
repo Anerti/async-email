@@ -21,7 +21,8 @@ src/main/java/com/async/mail/
 │   ├── S3Conf.java                   -- S3 client + presigner beans
 │   └── ResourcesAccessRules.java     -- Role-based resource access checks
 ├── mapper/
-│   └── UserMapper.java               -- JUser → UserResponse
+│   ├── UserMapper.java               -- JUser → UserResponse
+│   └── CourseMapper.java             -- JCourse → CourseResponse
 ├── validator/
 │   ├── AuthValidator.java            -- SignUpRequest validation rules
 │   └── GeneralValidator.java         -- Shared validation utilities
@@ -29,15 +30,17 @@ src/main/java/com/async/mail/
 │   ├── rest/controller/
 │   │   ├── health/                   -- PingController, HealthEmailController
 │   │   ├── AuthController.java       -- POST /auth/signup
+│   │   ├── CourseController.java     -- GET /courses (filtered, paginated)
 │   │   ├── HelloWorldController      -- /hello (async email trigger)
 │   │   ├── SubscribeController       -- POST /users/{userId}/courses/{courseId}
-│   │   └── dto/                      -- SignUpRequest, AuthResponse, UserResponse, …
+│   │   └── dto/                      -- SignUpRequest, AuthResponse, UserResponse, CourseResponse, CourseListResponse, Meta
 │   ├── event/model/                  -- PojaEvent, SendEmailRequested
 │   ├── event/consumer/               -- EventConsumer, EventServiceInvoker
 │   └── event/                        -- EventProducer, EventConf, EventStack
 ├── service/
 │   ├── event/                        -- SendEmailRequestedService (consumer)
 │   ├── AuthService.java              -- signUp + logIn with validation + persistence
+│   ├── CourseService.java           -- filtered/paginated course listing
 │   ├── SubscribeService              -- subscription logic with async email
 │   ├── InvoiceService.java           -- HTML → PDF invoice generation
 │   ├── QrCodeService.java            -- QR code data URI generation
@@ -50,12 +53,15 @@ src/main/java/com/async/mail/
 └── conf/                             -- test config classes
 
 src/test/java/com/async/mail/
-├── service/auth/
-│   ├── AuthServiceSignupTest.java    -- 32 service-layer signup tests
-│   └── AuthServiceLoginTest.java     -- service-layer login tests
+├── service/
+│   ├── auth/
+│   │   ├── AuthServiceSignupTest.java    -- 32 service-layer signup tests
+│   │   └── AuthServiceLoginTest.java     -- service-layer login tests
+│   └── CourseServiceTest.java           -- service-layer course listing tests
 ├── endpoint/rest/controller/
-│   ├── AuthControllerSignupTest.java -- 32 controller-layer signup tests
-│   └── AuthControllerLoginTest.java  -- controller-layer login tests
+│   ├── AuthControllerSignupTest.java     -- 32 controller-layer signup tests
+│   ├── AuthControllerLoginTest.java      -- controller-layer login tests
+│   └── CourseControllerTest.java        -- controller-layer course listing tests
 └── conf/                             -- FacadeIT, EventConf, …
 
 src/main/resources/
@@ -68,6 +74,10 @@ src/main/resources/
 doc/
 ├── api.yml                           -- OpenAPI 3.0.3 spec
 └── mcd.canvas                        -- Obsidian canvas (entity diagram)
+
+script/
+├── subscribe/test_subscribe.sh       -- 10 E2E subscribe cases
+└── courses/test_list_courses.sh      -- E2E course listing cases
 ```
 
 ## Architecture
@@ -80,12 +90,13 @@ Spring Boot REST API with async email capabilities (SES), backed by PostgreSQL. 
 |--------|------|-------------|------|
 | POST | `/auth/signup` | Register a new user account | No |
 | POST | `/auth/login` | Authenticate and receive a JWT token | No |
+| GET | `/courses` | List courses with filters and pagination | No |
 | POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (sends async email + invoice + QR) | JWT |
 | GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES | No |
 | GET | `/ping` | Health check | No |
 | GET | `/health/email?to=` | Synchronous SES email test (5 variants) | No |
 
-> **Status:** `/auth/signup` and `/auth/login` are fully implemented (controller + service + validator + tests).  
+> **Status:** `/auth/signup`, `/auth/login`, and `GET /courses` are fully implemented (controller + service + tests).  
 > Subscription (`POST /users/{userId}/courses/{courseId}`) triggers an async confirmation email with invoice PDF (S3) and QR code attachment.
 
 ## Domain entities
@@ -138,6 +149,7 @@ JAVA_HOME=$HOME/.jdks/ms-21.0.11 ./format.sh
 - `SendEmailRequestedService` implements `Consumer<SendEmailRequested>` — `@Service`, no `@Async`/`@EventListener`
 - Subscription triggers async confirmation email via the same event pipeline
 - **Subscribe test script** at `script/subscribe/test_subscribe.sh` — 10 end-to-end curl/curlie cases
+- **Course test script** at `script/courses/test_list_courses.sh` — E2E cases for filtered/paginated listing
 - **Invoice + QR**: subscription triggers a confirmation email with an invoice PDF (Flying Saucer) uploaded to S3 and a QR code data URI
 - **S3Service** uploads invoices and generates presigned download URLs (7-day expiry)
 

@@ -67,16 +67,16 @@ That's it — no other setup needed.
 ```text
 src/main/java/com/async/mail/
 ├── config/               Security config, JWT filter, token provider, S3 conf
-├── endpoint/rest/        AuthController, SubscribeController, HelloWorldController, …
-├── service/              AuthService, SubscribeService, InvoiceService, QrCodeService, S3Service
+├── endpoint/rest/        AuthController, CourseController, SubscribeController, HelloWorldController, …
+├── service/              AuthService, CourseService, SubscribeService, InvoiceService, QrCodeService, S3Service
 ├── validator/            AuthValidator, GeneralValidator
-├── repository/           JPA repositories (AuthRepository, JUserCourseRepository, …)
-├── mapper/               UserMapper (JUser → UserResponse)
+├── repository/           JPA repositories (AuthRepository, JCourseRepository, …)
+├── mapper/               UserMapper, CourseMapper
 └── ...
 
 src/test/java/com/async/mail/
-├── service/auth/         AuthServiceSignupTest (32), AuthServiceLoginTest
-├── endpoint/rest/        AuthControllerSignupTest (32), AuthControllerLoginTest
+├── service/              AuthServiceSignupTest (32), AuthServiceLoginTest, CourseServiceTest
+├── endpoint/rest/        AuthControllerSignupTest (32), AuthControllerLoginTest, CourseControllerTest
 └── conf/                 FacadeIT, EventConf, …
 ```
 
@@ -86,6 +86,7 @@ src/test/java/com/async/mail/
 |--------|------|-------------|------|
 | POST | `/auth/signup` | Register a new user account | No |
 | POST | `/auth/login` | Authenticate and receive a JWT token | No |
+| GET | `/courses` | List courses with filters (`title`, `startDate`, `endDate`, `price`) and pagination (`page`, `pageSize`) | No |
 | POST | `/users/{userId}/courses/{courseId}` | Subscribe a user to a course (requires JWT) | JWT |
 | GET | `/hello?to=&subject=&htmlBody=` | Produces `SendEmailRequested` event → async email via SES | No |
 | GET | `/ping` | Health check | No |
@@ -98,6 +99,7 @@ E2E test scripts for manual verification live in `script/`:
 | Script | Cases |
 |--------|-------|
 | [`script/subscribe/test_subscribe.sh`](script/subscribe/test_subscribe.sh) | 10 cases (happy path + auth errors + permission checks + not found + conflict) |
+| [`script/courses/test_list_courses.sh`](script/courses/test_list_courses.sh) | Filtered/paginated course listing E2E |
 
 ## Caveats
 
