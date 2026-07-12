@@ -83,7 +83,7 @@ public class SubscribeService {
                     new ConflictException(
                         String.format("You are already subscribed in course %s", courseId)));
 
-    var qrDataUri = generateInvoiceQrDataUri(user, course, userId, courseId);
+    var qrImageUrl = generateInvoiceQrImageUrl(user, course, userId, courseId);
 
     var emailEvent =
         SendEmailRequested.builder()
@@ -98,7 +98,7 @@ public class SubscribeService {
                         course.getTitle(),
                         course.getStartDate(),
                         course.getEndDate(),
-                        qrDataUri))
+                        qrImageUrl))
             .build();
     eventProducer.accept(List.of(emailEvent));
 
@@ -106,13 +106,15 @@ public class SubscribeService {
         saved.getId(), saved.getUser().getId(), saved.getCourse().getId(), saved.getSubscribedAt());
   }
 
-  private String generateInvoiceQrDataUri(User user, JCourse course, UUID userId, UUID courseId) {
+  private String generateInvoiceQrImageUrl(User user, JCourse course, UUID userId, UUID courseId) {
     var invoiceNumber = UUID.randomUUID().toString();
     try {
       var pdfBytes = invoiceService.generateInvoice(user, course, invoiceNumber);
-      var s3Key = s3Service.uploadInvoice(userId, courseId, pdfBytes);
-      var downloadUrl = s3Service.generateDownloadUrl(s3Key);
-      return qrCodeService.generateQrDataUri(downloadUrl.toString());
+      var invoiceKey = s3Service.uploadInvoice(userId, courseId, pdfBytes);
+      var invoiceUrl = s3Service.generateDownloadUrl(invoiceKey);
+      var qrPng = qrCodeService.generateQrPngBytes(invoiceUrl.toString());
+      var qrKey = s3Service.uploadQrCode(userId, courseId, qrPng);
+      return s3Service.generateDownloadUrl(qrKey).toString();
     } catch (Exception e) {
       log.warn(
           "Failed to generate or upload invoice for user {} course {}: {}",
