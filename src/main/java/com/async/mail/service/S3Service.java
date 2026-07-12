@@ -3,7 +3,6 @@ package com.async.mail.service;
 import java.net.URL;
 import java.time.Duration;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -14,14 +13,20 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Service
-@AllArgsConstructor
 public class S3Service {
 
   private final S3Client s3Client;
   private final S3Presigner s3Presigner;
+  private final String invoiceBucket;
 
-  @Value("${app.invoice.s3-bucket}")
-  private String invoiceBucket;
+  public S3Service(
+      S3Client s3Client,
+      S3Presigner s3Presigner,
+      @Value("${app.invoice.s3-bucket}") String invoiceBucket) {
+    this.s3Client = s3Client;
+    this.s3Presigner = s3Presigner;
+    this.invoiceBucket = invoiceBucket;
+  }
 
   public String uploadInvoice(UUID userId, UUID courseId, byte[] pdfContent) {
     var key =
