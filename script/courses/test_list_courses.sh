@@ -9,8 +9,8 @@ echo "── 2) 200 — GET /courses?title=Mathematics (full match)  →  200 / 
 curlie GET "http://localhost:8080/courses" title=="Mathematics"
 echo
 
-echo "── 3) 200 — GET /courses?title=Math (prefix match)  →  200 / 1 course"
-curlie GET "http://localhost:8080/courses" title=="Math"
+echo "── 3) 200 — GET /courses?title=Algo (prefix match)  →  200 / 1 course (Algorithms only)"
+curlie GET "http://localhost:8080/courses" title=="Algo"
 echo
 
 echo "── 4) 200 — GET /courses?price=149.00 (exact price)  →  200 / 1 course"
