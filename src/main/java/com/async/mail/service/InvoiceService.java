@@ -23,20 +23,16 @@ public class InvoiceService {
   private static String invoiceTemplate() {
     try {
       return new String(
-          new ClassPathResource("email/invoice.html")
-              .getInputStream()
-              .readAllBytes(),
+          new ClassPathResource("email/invoice.html").getInputStream().readAllBytes(),
           StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load invoice template", e);
     }
   }
 
-  public byte[] generateInvoice(
-      User user, JCourse course, String invoiceNumber) {
+  public byte[] generateInvoice(User user, JCourse course, String invoiceNumber) {
     var date = DATE_FORMATTER.format(Instant.now());
-    var priceFormatted =
-        NumberFormat.getCurrencyInstance(Locale.US).format(course.getPrice());
+    var priceFormatted = NumberFormat.getCurrencyInstance(Locale.US).format(course.getPrice());
     var html =
         invoiceTemplate()
             .formatted(

@@ -29,9 +29,7 @@ public class S3Service {
   }
 
   public String uploadInvoice(UUID userId, UUID courseId, byte[] pdfContent) {
-    var key =
-        String.format(
-            "invoices/%s/%s/%d.pdf", userId, courseId, System.currentTimeMillis());
+    var key = String.format("invoices/%s/%s/%d.pdf", userId, courseId, System.currentTimeMillis());
     var request =
         PutObjectRequest.builder()
             .bucket(invoiceBucket)
@@ -43,8 +41,7 @@ public class S3Service {
   }
 
   public URL generateDownloadUrl(String key) {
-    var getObjectRequest =
-        GetObjectRequest.builder().bucket(invoiceBucket).key(key).build();
+    var getObjectRequest = GetObjectRequest.builder().bucket(invoiceBucket).key(key).build();
     var presignRequest =
         GetObjectPresignRequest.builder()
             .signatureDuration(Duration.ofDays(7))

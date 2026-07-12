@@ -40,10 +40,10 @@ public class SubscribeService {
   private static String emailTemplate() {
     try {
       return new String(
-              new ClassPathResource("email/subscription-confirmation.html")
-                      .getInputStream()
-                      .readAllBytes(),
-              StandardCharsets.UTF_8);
+          new ClassPathResource("email/subscription-confirmation.html")
+              .getInputStream()
+              .readAllBytes(),
+          StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new RuntimeException("Failed to load email template", e);
     }
@@ -65,13 +65,15 @@ public class SubscribeService {
             jUser.getRole());
 
     if (!resourcesAccessRules.grantAccessFor(user)) {
-      throw new ForbiddenException(String.format("Cannot subscribe user %s to course %s", userId, courseId));
+      throw new ForbiddenException(
+          String.format("Cannot subscribe user %s to course %s", userId, courseId));
     }
 
     var course =
         courseRepository
             .findById(courseId)
-            .orElseThrow(() -> new NotFoundException(String.format("Course %s not found", courseId)));
+            .orElseThrow(
+                () -> new NotFoundException(String.format("Course %s not found", courseId)));
 
     var saved =
         userCourseRepository
@@ -87,14 +89,16 @@ public class SubscribeService {
         SendEmailRequested.builder()
             .to(user.email())
             .subject(String.format("Subscription to %s", course.getTitle()))
-            .htmlBody(emailTemplate().formatted(
-                    user.firstName(),
-                    user.lastName(),
-                    course.getTitle(),
-                    course.getTitle(),
-                    course.getStartDate(),
-                    course.getEndDate(),
-                    qrDataUri))
+            .htmlBody(
+                emailTemplate()
+                    .formatted(
+                        user.firstName(),
+                        user.lastName(),
+                        course.getTitle(),
+                        course.getTitle(),
+                        course.getStartDate(),
+                        course.getEndDate(),
+                        qrDataUri))
             .build();
     eventProducer.accept(List.of(emailEvent));
 
@@ -110,8 +114,11 @@ public class SubscribeService {
       var downloadUrl = s3Service.generateDownloadUrl(s3Key);
       return qrCodeService.generateQrDataUri(downloadUrl.toString());
     } catch (Exception e) {
-      log.warn("Failed to generate or upload invoice for user {} course {}: {}",
-          userId, courseId, e.getMessage());
+      log.warn(
+          "Failed to generate or upload invoice for user {} course {}: {}",
+          userId,
+          courseId,
+          e.getMessage());
       return "";
     }
   }
