@@ -82,7 +82,8 @@ public class SubscribeService {
                         String.format("You are already subscribed in course %s", courseId)));
 
     var attachment = generateInvoiceAttachment(user, course);
-    var attachments = attachment != null ? List.of(attachment) : List.<SendEmailRequested.Attachment>of();
+    var attachments =
+        attachment != null ? List.of(attachment) : List.<SendEmailRequested.Attachment>of();
 
     var emailEvent =
         SendEmailRequested.builder()

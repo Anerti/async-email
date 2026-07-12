@@ -27,7 +27,8 @@ public class SendEmailRequestedService implements Consumer<SendEmailRequested> {
     var htmlBody =
         sendEmailRequested.getHtmlBody() != null ? sendEmailRequested.getHtmlBody() : "... world!";
     var attachments = toFiles(sendEmailRequested.getAttachments());
-    mailer.accept(new Email(recipientAddress, List.of(), List.of(), subject, htmlBody, attachments));
+    mailer.accept(
+        new Email(recipientAddress, List.of(), List.of(), subject, htmlBody, attachments));
   }
 
   private List<File> toFiles(List<SendEmailRequested.Attachment> attachments) {
