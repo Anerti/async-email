@@ -25,26 +25,23 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor
 public class SubscribeService {
 
-  private static final String EMAIL_TEMPLATE;
-
-  static {
-    try {
-      EMAIL_TEMPLATE =
-          new String(
-              new ClassPathResource("email/subscription-confirmation.html")
-                  .getInputStream()
-                  .readAllBytes(),
-              StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to load email template", e);
-    }
-  }
-
   private final JUserRepository userRepository;
   private final JCourseRepository courseRepository;
   private final JUserCourseRepository userCourseRepository;
   private final EventProducer<SendEmailRequested> eventProducer;
   private final ResourcesAccessRules resourcesAccessRules;
+
+  private static String emailTemplate() {
+    try {
+      return new String(
+              new ClassPathResource("email/subscription-confirmation.html")
+                      .getInputStream()
+                      .readAllBytes(),
+              StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load email template", e);
+    }
+  }
 
   @Transactional
   public UserCourseResponse subscribe(UUID userId, UUID courseId) {
@@ -60,9 +57,11 @@ public class SubscribeService {
             jUser.getUsername(),
             jUser.getEmail(),
             jUser.getRole());
+
     if (!resourcesAccessRules.grantAccessFor(user)) {
       throw new ForbiddenException(String.format("Cannot subscribe user %s to course %s", userId, courseId));
     }
+
     var course =
         courseRepository
             .findById(courseId)
@@ -79,9 +78,8 @@ public class SubscribeService {
     var emailEvent =
         SendEmailRequested.builder()
             .to(user.email())
-            .subject("Subscription to " + course.getTitle())
-            .htmlBody(
-                EMAIL_TEMPLATE.formatted(
+            .subject(String.format("Subscription to %s", course.getTitle()))
+            .htmlBody(emailTemplate().formatted(
                     user.firstName(),
                     user.lastName(),
                     course.getTitle(),
