@@ -50,9 +50,11 @@ class DataControllerTest {
 
       var file =
           new MockMultipartFile("file", "test.jpeg", "image/jpeg", "fake-image-content".getBytes());
+      var emailPart =
+          new MockMultipartFile("email", "", "text/plain", "test@example.com".getBytes());
 
       mockMvc
-          .perform(multipart("/data").file(file).param("email", "test@example.com"))
+          .perform(multipart("/data").file(file).file(emailPart))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.id").value(id.toString()))
           .andExpect(jsonPath("$.filename").value("test.jpeg"))
@@ -69,9 +71,11 @@ class DataControllerTest {
 
       var file =
           new MockMultipartFile("file", "test.png", "image/png", "fake-png-content".getBytes());
+      var emailPart =
+          new MockMultipartFile("email", "", "text/plain", "test@example.com".getBytes());
 
       mockMvc
-          .perform(multipart("/data").file(file).param("email", "test@example.com"))
+          .perform(multipart("/data").file(file).file(emailPart))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.filename").value("test.png"))
           .andExpect(jsonPath("$.email").value("test@example.com"));

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,7 +31,7 @@ public class DataController {
 
   @PostMapping("/data")
   public ResponseEntity<DataResponse> submitImageData(
-      @RequestParam("file") MultipartFile file, @RequestParam("email") String email) {
+      @RequestPart("file") MultipartFile file, @RequestPart("email") String email) {
     return ResponseEntity.status(HttpStatus.CREATED).body(dataService.submitImageData(file, email));
   }
 }
