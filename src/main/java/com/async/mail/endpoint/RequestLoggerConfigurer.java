@@ -44,16 +44,10 @@ public class RequestLoggerConfigurer implements WebMvcConfigurer {
       request.setAttribute(THREAD_OLD_NAME, oldThreadName);
       renameFrontalThread(current);
 
-      String parameters;
-      try {
-        parameters =
-            request.getParameterMap().entrySet().stream()
-                .map(entry -> entry.getKey() + "=" + String.join(",", entry.getValue()))
-                .collect(joining(";"));
-      } catch (Exception e) {
-        parameters = "N/A";
-        log.warn("Failed to read request parameters: {}", e.getMessage());
-      }
+      String parameters =
+          request.getParameterMap().entrySet().stream()
+              .map(entry -> entry.getKey() + "=" + String.join(",", entry.getValue()))
+              .collect(joining(";"));
       log.info(
           "preHandle: " + "method={}, uri={}, parameters=[{}], " + "handler={}, oldThreadName={}",
           request.getMethod(),

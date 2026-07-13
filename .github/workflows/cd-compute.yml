@@ -35,7 +35,7 @@ jobs:
 
       - name: Update github workflow state
         run: |
-          commit_message=$(git log -1 --pretty=%s)
+          commit_message=$(git log -1 --pretty=%B)
           commit_author=$(git log -1 --pretty=%an)
 
           app_env_deployment_id_value=${{ env.app_env_deployment_id }}
@@ -163,7 +163,7 @@ jobs:
       - name: Update github state if step fails
         if: failure()
         run: |
-          commit_message=$(git log -1 --pretty=%s)
+          commit_message=$(git log -1 --pretty=%B)
           commit_author=$(git log -1 --pretty=%an)
 
           app_env_deployment_id_value=${{ env.app_env_deployment_id }}
