@@ -39,7 +39,10 @@ class DataServiceTest {
   @Mock S3Service s3Service;
   @Mock EventProducer<SendEmailRequested> eventProducer;
 
-  @Captor @SuppressWarnings("rawtypes") ArgumentCaptor<Collection> eventCaptor;
+  @Captor
+  @SuppressWarnings("rawtypes")
+  ArgumentCaptor<Collection> eventCaptor;
+
   @Captor ArgumentCaptor<String> uploadCaptor;
 
   DataService dataService;
@@ -69,7 +72,11 @@ class DataServiceTest {
   void setUp() {
     dataService =
         new DataService(
-            dataRepository, dataMapper, new DataValidator(new GeneralValidator()), s3Service, eventProducer);
+            dataRepository,
+            dataMapper,
+            new DataValidator(new GeneralValidator()),
+            s3Service,
+            eventProducer);
   }
 
   @Nested
@@ -153,7 +160,7 @@ class DataServiceTest {
 
       var event = (SendEmailRequested) events.iterator().next();
       assertEquals("user@example.com", event.getTo());
-      assertEquals("Your Image Processing Result", event.getSubject());
+      assertEquals("Image Processing Complete", event.getSubject());
       assertTrue(event.getHtmlBody().contains(MOCK_PRESIGNED_URL.toString()));
       assertNull(event.getAttachments());
     }
@@ -178,8 +185,7 @@ class DataServiceTest {
 
       dataService.submitImageData(file, "user@example.com");
 
-      verify(s3Service, times(2))
-          .uploadBytes(uploadCaptor.capture(), any(), any());
+      verify(s3Service, times(2)).uploadBytes(uploadCaptor.capture(), any(), any());
 
       var keys = uploadCaptor.getAllValues();
       assertEquals(2, keys.size());

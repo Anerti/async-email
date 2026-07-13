@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -27,93 +28,92 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class DataService {
 
+  private static final String EMAIL_TEMPLATE;
+
+  static {
+    try {
+      EMAIL_TEMPLATE =
+          new String(
+              new ClassPathResource("email/data-submission.html").getInputStream().readAllBytes(),
+              StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new ExceptionInInitializerError(e);
+    }
+  }
+
   private final JDataRepository dataRepository;
   private final DataMapper dataMapper;
   private final DataValidator dataValidator;
   private final S3Service s3Service;
   private final EventProducer<SendEmailRequested> eventProducer;
 
-  private static String emailTemplate() {
-    try {
-      return new String(
-          new ClassPathResource("email/data-submission.html")
-              .getInputStream()
-              .readAllBytes(),
-          StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to load email template", e);
-    }
-  }
-
-  private static String getExtension(String filename) {
-    if (filename == null || !filename.contains(".")) {
-      return "png";
-    }
-    return filename.substring(filename.lastIndexOf('.') + 1);
-  }
-
-  private static byte[] convertToGrayscale(byte[] imageBytes) {
+  private static byte[] toGrayscale(byte[] imageBytes) {
     try {
       var original = ImageIO.read(new ByteArrayInputStream(imageBytes));
       if (original == null) {
         throw new RuntimeException("Failed to decode image: unsupported format");
       }
-
       var grayscale =
-          new BufferedImage(original.getWidth(), original.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+          new BufferedImage(
+              original.getWidth(), original.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
       var g = grayscale.createGraphics();
       g.drawImage(original, 0, 0, null);
       g.dispose();
-
       var baos = new ByteArrayOutputStream();
       ImageIO.write(grayscale, "png", baos);
       return baos.toByteArray();
     } catch (IOException e) {
-      throw new RuntimeException("Failed to convert image to grayscale", e);
+      throw new UncheckedIOException("Failed to convert image to grayscale", e);
     }
+  }
+
+  private static String extension(String filename) {
+    return filename != null && filename.contains(".")
+        ? filename.substring(filename.lastIndexOf('.') + 1)
+        : "png";
   }
 
   public DataResponse submitImageData(MultipartFile file, String email) {
     dataValidator.validateSubmit(file, email);
-
     try {
-      var originalBytes = file.getBytes();
       var id = UUID.randomUUID();
       var now = Instant.now();
-      var ext = getExtension(file.getOriginalFilename());
+      var originalBytes = file.getBytes();
+      var ext = extension(file.getOriginalFilename());
+      var ts = now.toEpochMilli();
 
-      var originalKey =
-          String.format(
-              "images/data/%s/original-%d.%s", id, now.toEpochMilli(), ext);
-      s3Service.uploadBytes(originalKey, originalBytes, file.getContentType());
+      s3Service.uploadBytes(
+          "images/data/%s/original-%d.%s".formatted(id, ts, ext),
+          originalBytes,
+          file.getContentType());
 
-      var grayscaleBytes = convertToGrayscale(originalBytes);
-      var grayscaleKey =
-          String.format("images/data/%s/grayscale-%d.png", id, now.toEpochMilli());
-      s3Service.uploadBytes(grayscaleKey, grayscaleBytes, "image/png");
-
-      var grayscaleUrl = s3Service.generateDownloadUrl(grayscaleKey).toString();
+      var grayscaleBytes = toGrayscale(originalBytes);
+      s3Service.uploadBytes(
+          "images/data/%s/grayscale-%d.png".formatted(id, ts), grayscaleBytes, "image/png");
 
       var data = new JData();
       data.setId(id);
       data.setFilename(file.getOriginalFilename());
       data.setEmail(email);
       data.setCreatedAt(now);
-      var saved = dataRepository.save(data);
 
-      var emailEvent =
-          SendEmailRequested.builder()
-              .to(email)
-              .subject("Your Image Processing Result")
-              .htmlBody(emailTemplate().formatted(grayscaleUrl))
-              .build();
-      eventProducer.accept(List.of(emailEvent));
+      eventProducer.accept(
+          List.of(
+              SendEmailRequested.builder()
+                  .to(email)
+                  .subject("Image Processing Complete")
+                  .htmlBody(
+                      EMAIL_TEMPLATE.formatted(
+                          s3Service
+                              .generateDownloadUrl(
+                                  "images/data/%s/grayscale-%d.png".formatted(id, ts))
+                              .toString()))
+                  .build()));
 
-      log.info("Image processed: id={}, email={}, grayscaleUrl={}", id, email, grayscaleUrl);
-
-      return dataMapper.toResponse(saved);
+      log.info("Image processed: id={}, email={}", id, email);
+      return dataMapper.toResponse(dataRepository.save(data));
     } catch (IOException e) {
-      throw new RuntimeException("Failed to process image data", e);
+      throw new UncheckedIOException("Failed to process image data", e);
     }
   }
 }

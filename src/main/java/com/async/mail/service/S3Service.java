@@ -30,11 +30,7 @@ public class S3Service {
 
   public String uploadBytes(String key, byte[] content, String contentType) {
     var request =
-        PutObjectRequest.builder()
-            .bucket(invoiceBucket)
-            .key(key)
-            .contentType(contentType)
-            .build();
+        PutObjectRequest.builder().bucket(invoiceBucket).key(key).contentType(contentType).build();
     s3Client.putObject(request, RequestBody.fromBytes(content));
     return key;
   }
