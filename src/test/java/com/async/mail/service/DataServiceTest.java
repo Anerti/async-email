@@ -34,7 +34,8 @@ class DataServiceTest {
 
   @BeforeEach
   void setUp() {
-    dataService = new DataService(dataRepository, dataMapper, new DataValidator(new GeneralValidator()));
+    dataService =
+        new DataService(dataRepository, dataMapper, new DataValidator(new GeneralValidator()));
   }
 
   @Nested
@@ -48,7 +49,9 @@ class DataServiceTest {
       saved.setFilename("test.jpeg");
       saved.setEmail("test@example.com");
       saved.setCreatedAt(Instant.now());
-      var response = new DataResponse(saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
+      var response =
+          new DataResponse(
+              saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
 
       when(dataRepository.save(any())).thenReturn(saved);
       when(dataMapper.toResponse(saved)).thenReturn(response);
@@ -68,7 +71,9 @@ class DataServiceTest {
       saved.setFilename("test.png");
       saved.setEmail("test@example.com");
       saved.setCreatedAt(Instant.now());
-      var response = new DataResponse(saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
+      var response =
+          new DataResponse(
+              saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
 
       when(dataRepository.save(any())).thenReturn(saved);
       when(dataMapper.toResponse(saved)).thenReturn(response);
@@ -87,8 +92,9 @@ class DataServiceTest {
     void test3_emailBlank_throwsUnprocessable() {
       var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, ""));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class, () -> dataService.submitImageData(file, ""));
       assertTrue(ex.getMessage().contains("email is required"));
     }
 
@@ -96,8 +102,10 @@ class DataServiceTest {
     void test4_emptyFile_throwsUnprocessable() {
       var file = new MockMultipartFile("file", "empty.png", "image/png", new byte[0]);
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, "test@example.com"));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class,
+              () -> dataService.submitImageData(file, "test@example.com"));
       assertTrue(ex.getMessage().contains("file is required and cannot be empty"));
     }
 
@@ -106,8 +114,10 @@ class DataServiceTest {
       var oversized = new byte[10 * 1024 * 1024 + 1];
       var file = new MockMultipartFile("file", "big.jpg", "image/jpeg", oversized);
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, "test@example.com"));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class,
+              () -> dataService.submitImageData(file, "test@example.com"));
       assertTrue(ex.getMessage().contains("file must not exceed 10 MB"));
     }
 
@@ -115,8 +125,10 @@ class DataServiceTest {
     void test6_unsupportedFormat_throwsUnprocessable() {
       var file = new MockMultipartFile("file", "test.pdf", "application/pdf", "content".getBytes());
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, "test@example.com"));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class,
+              () -> dataService.submitImageData(file, "test@example.com"));
       assertTrue(ex.getMessage().contains("Unsupported file format"));
     }
 
@@ -124,8 +136,10 @@ class DataServiceTest {
     void test7_invalidEmail_throwsUnprocessable() {
       var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, "not-an-email"));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class,
+              () -> dataService.submitImageData(file, "not-an-email"));
       assertTrue(ex.getMessage().contains("Invalid email format"));
     }
 
@@ -134,8 +148,10 @@ class DataServiceTest {
       var longName = "f".repeat(101) + ".png";
       var file = new MockMultipartFile("file", longName, "image/png", "content".getBytes());
 
-      var ex = assertThrows(UnprocessableEntityException.class,
-          () -> dataService.submitImageData(file, "test@example.com"));
+      var ex =
+          assertThrows(
+              UnprocessableEntityException.class,
+              () -> dataService.submitImageData(file, "test@example.com"));
       assertTrue(ex.getMessage().contains("filename must not exceed 100 characters"));
     }
   }
