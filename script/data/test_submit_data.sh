@@ -9,100 +9,87 @@
 set -euo pipefail
 
 BASE_URL="http://localhost:8080"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# --- Generate test files ---
-
+# Create auxiliary test files (empty, oversized, long name)
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-# Minimal 1x1 valid PNG
-python3 -c "
-import struct, zlib
-def chunk(ctype, data):
-    c = ctype + data
-    return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-ihdr = struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0)
-with open('$TMPDIR/valid.png', 'wb') as f:
-    f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', ihdr) + chunk(b'IDAT', zlib.compress(b'\x00\xff\x00\x00')) + chunk(b'IEND', b''))
-"
+touch "$TMPDIR/empty.png"
 
-# Minimal 1x1 valid GIF (unsupported format test)
-python3 -c "
-import struct
-with open('$TMPDIR/test.gif', 'wb') as f:
-    f.write(b'GIF89a' + struct.pack('<HH', 1, 1) + b'\x00\x00' + b'\x00' + b'\x00\x00' + b'\x02' + struct.pack('<H', 1) + b'\x00\x00' + b'\x00\x00\x00\x00\x00\x00' + b'\x00' + b'\x3b')
-"
-
-# 10 MB + 1 byte file (oversized)
 python3 -c "
 with open('$TMPDIR/big.jpg', 'wb') as f:
     f.seek(10 * 1024 * 1024 + 1)
     f.write(b'\x00')
 "
 
-# Empty file
-touch "$TMPDIR/empty.png"
-
-# File with long name (>100 chars)
 LONGNAME=$(python3 -c "print('f' * 101 + '.png')")
-cp "$TMPDIR/valid.png" "$TMPDIR/$LONGNAME"
+cp "$DIR/test.png" "$TMPDIR/$LONGNAME"
 
 echo "──────────────────────────────────────────────────────────────"
 echo "  POST /data — Test Suite"
 echo "──────────────────────────────────────────────────────────────"
 echo
 
-# ── 1 — Successful submission ────────────────────────────────────
+# ── 1 — Successful JPEG submission ───────────────────────────────
 
-echo "── 1) 201 — POST /data (valid PNG + email)  →  201 / DataResponse"
+echo "── 1) 201 — POST /data (valid JPEG, email)  →  201 / DataResponse"
 curl -s -X POST "$BASE_URL/data" \
-  -F "file=@$TMPDIR/valid.png" \
+  -F "file=@$DIR/test.jpeg" \
   -F "email=test@example.com" | jq .
 echo
 
-# ── 2 — Email missing ────────────────────────────────────────────
+# ── 2 — Successful PNG submission ────────────────────────────────
 
-echo "── 2) 422 — POST /data (email blank)  →  422 / email is required"
+echo "── 2) 201 — POST /data (valid PNG, email)  →  201 / DataResponse"
 curl -s -X POST "$BASE_URL/data" \
-  -F "file=@$TMPDIR/valid.png" \
+  -F "file=@$DIR/test.png" \
+  -F "email=test@example.com" | jq .
+echo
+
+# ── 3 — Email blank ──────────────────────────────────────────────
+
+echo "── 3) 422 — POST /data (email blank)  →  422 / email is required"
+curl -s -X POST "$BASE_URL/data" \
+  -F "file=@$DIR/test.jpeg" \
   -F "email=" | jq .
 echo
 
-# ── 3 — File empty ───────────────────────────────────────────────
+# ── 4 — File empty ───────────────────────────────────────────────
 
-echo "── 3) 422 — POST /data (empty file)  →  422 / file is required and cannot be empty"
+echo "── 4) 422 — POST /data (empty file)  →  422 / file is required and cannot be empty"
 curl -s -X POST "$BASE_URL/data" \
   -F "file=@$TMPDIR/empty.png" \
   -F "email=test@example.com" | jq .
 echo
 
-# ── 4 — File too large ───────────────────────────────────────────
+# ── 5 — File too large ───────────────────────────────────────────
 
-echo "── 4) 422 — POST /data (file > 10 MB)  →  422 / file must not exceed 10 MB"
+echo "── 5) 422 — POST /data (file > 10 MB)  →  422 / file must not exceed 10 MB"
 curl -s -X POST "$BASE_URL/data" \
   -F "file=@$TMPDIR/big.jpg" \
   -F "email=test@example.com" | jq .
 echo
 
-# ── 5 — Unsupported format ───────────────────────────────────────
+# ── 6 — Unsupported PDF format ───────────────────────────────────
 
-echo "── 5) 422 — POST /data (GIF file)  →  422 / Unsupported file format"
+echo "── 6) 422 — POST /data (PDF file)  →  422 / Unsupported file format"
 curl -s -X POST "$BASE_URL/data" \
-  -F "file=@$TMPDIR/test.gif" \
+  -F "file=@$DIR/test.pdf" \
   -F "email=test@example.com" | jq .
 echo
 
-# ── 6 — Invalid email ────────────────────────────────────────────
+# ── 7 — Invalid email ────────────────────────────────────────────
 
-echo "── 6) 422 — POST /data (invalid email)  →  422 / Invalid email format"
+echo "── 7) 422 — POST /data (invalid email)  →  422 / Invalid email format"
 curl -s -X POST "$BASE_URL/data" \
-  -F "file=@$TMPDIR/valid.png" \
+  -F "file=@$DIR/test.jpeg" \
   -F "email=not-an-email" | jq .
 echo
 
-# ── 7 — Filename too long ────────────────────────────────────────
+# ── 8 — Filename too long ────────────────────────────────────────
 
-echo "── 7) 422 — POST /data (filename > 100 chars)  →  422 / filename must not exceed 100 characters"
+echo "── 8) 422 — POST /data (filename > 100 chars)  →  422 / filename must not exceed 100 characters"
 curl -s -X POST "$BASE_URL/data" \
   -F "file=@$TMPDIR/$LONGNAME" \
   -F "email=test@example.com" | jq .
