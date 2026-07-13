@@ -109,7 +109,7 @@ public class GlobalExceptionHandler {
         .body(
             ErrorBody.builder()
                 .error("INTERNAL_ERROR")
-                .message("Something went wrong")
+                .message("Something went wrong: " + ex.getMessage())
                 .status(status.value())
                 .build());
   }
