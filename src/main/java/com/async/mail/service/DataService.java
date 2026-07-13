@@ -19,7 +19,9 @@ public class DataService {
   private final DataValidator dataValidator;
 
   public DataResponse submitImageData(MultipartFile file, String email) {
-    String filename = dataValidator.validateSubmit(file, email);
+    dataValidator.validateSubmit(file, email);
+
+    String filename = file.getOriginalFilename();
 
     JData data = new JData();
     data.setFilename(filename);
