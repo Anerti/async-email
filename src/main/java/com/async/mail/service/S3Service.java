@@ -28,24 +28,16 @@ public class S3Service {
     this.invoiceBucket = invoiceBucket;
   }
 
-  public String uploadInvoice(UUID userId, UUID courseId, byte[] pdfContent) {
-    var key = String.format("invoices/%s/%s/%d.pdf", userId, courseId, System.currentTimeMillis());
+  public String uploadBytes(String key, byte[] content, String contentType) {
     var request =
-        PutObjectRequest.builder()
-            .bucket(invoiceBucket)
-            .key(key)
-            .contentType("application/pdf")
-            .build();
-    s3Client.putObject(request, RequestBody.fromBytes(pdfContent));
+        PutObjectRequest.builder().bucket(invoiceBucket).key(key).contentType(contentType).build();
+    s3Client.putObject(request, RequestBody.fromBytes(content));
     return key;
   }
 
-  public String uploadQrCode(UUID userId, UUID courseId, byte[] pngContent) {
-    var key = String.format("qrcodes/%s/%s/%d.png", userId, courseId, System.currentTimeMillis());
-    var request =
-        PutObjectRequest.builder().bucket(invoiceBucket).key(key).contentType("image/png").build();
-    s3Client.putObject(request, RequestBody.fromBytes(pngContent));
-    return key;
+  public String uploadInvoice(UUID userId, UUID courseId, byte[] pdfContent) {
+    var key = String.format("invoices/%s/%s/%d.pdf", userId, courseId, System.currentTimeMillis());
+    return uploadBytes(key, pdfContent, "application/pdf");
   }
 
   public URL generateDownloadUrl(String key) {
