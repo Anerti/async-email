@@ -1,8 +1,11 @@
 package com.async.mail.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.async.mail.endpoint.event.EventProducer;
+import com.async.mail.endpoint.event.model.SendEmailRequested;
 import com.async.mail.endpoint.rest.controller.dto.DataResponse;
 import com.async.mail.exception.UnprocessableEntityException;
 import com.async.mail.mapper.DataMapper;
@@ -10,8 +13,15 @@ import com.async.mail.repository.JDataRepository;
 import com.async.mail.repository.model.JData;
 import com.async.mail.validator.DataValidator;
 import com.async.mail.validator.GeneralValidator;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.net.URL;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,23 +37,50 @@ class DataServiceTest {
 
   @Mock JDataRepository dataRepository;
   @Mock DataMapper dataMapper;
+  @Mock S3Service s3Service;
+  @Mock EventProducer<SendEmailRequested> eventProducer;
 
   @Captor ArgumentCaptor<JData> dataCaptor;
+  @Captor @SuppressWarnings("rawtypes") ArgumentCaptor<Collection> eventCaptor;
+  @Captor ArgumentCaptor<String> uploadCaptor;
 
   DataService dataService;
+
+  private static final URL MOCK_PRESIGNED_URL;
+
+  static {
+    try {
+      MOCK_PRESIGNED_URL = URI.create("https://s3.example.com/data/grayscale.png").toURL();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static byte[] createTestImageBytes() {
+    try {
+      var img = new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB);
+      var baos = new ByteArrayOutputStream();
+      ImageIO.write(img, "png", baos);
+      return baos.toByteArray();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @BeforeEach
   void setUp() {
     dataService =
-        new DataService(dataRepository, dataMapper, new DataValidator(new GeneralValidator()));
+        new DataService(
+            dataRepository, dataMapper, new DataValidator(new GeneralValidator()), s3Service, eventProducer);
   }
 
   @Nested
-  class Success201 {
+  class SuccessCases {
 
     @Test
     void test1_validJpeg_returnsDataResponse() {
-      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
+      var imageBytes = createTestImageBytes();
+      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", imageBytes);
       var saved = new JData();
       saved.setId(UUID.randomUUID());
       saved.setFilename("test.jpeg");
@@ -53,6 +90,8 @@ class DataServiceTest {
           new DataResponse(
               saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
 
+      when(s3Service.generateDownloadUrl(any())).thenReturn(MOCK_PRESIGNED_URL);
+      doNothing().when(eventProducer).accept(any());
       when(dataRepository.save(any())).thenReturn(saved);
       when(dataMapper.toResponse(saved)).thenReturn(response);
 
@@ -65,7 +104,8 @@ class DataServiceTest {
 
     @Test
     void test2_validPng_returnsDataResponse() {
-      var file = new MockMultipartFile("file", "test.png", "image/png", "content".getBytes());
+      var imageBytes = createTestImageBytes();
+      var file = new MockMultipartFile("file", "test.png", "image/png", imageBytes);
       var saved = new JData();
       saved.setId(UUID.randomUUID());
       saved.setFilename("test.png");
@@ -75,6 +115,8 @@ class DataServiceTest {
           new DataResponse(
               saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
 
+      when(s3Service.generateDownloadUrl(any())).thenReturn(MOCK_PRESIGNED_URL);
+      doNothing().when(eventProducer).accept(any());
       when(dataRepository.save(any())).thenReturn(saved);
       when(dataMapper.toResponse(saved)).thenReturn(response);
 
@@ -83,6 +125,69 @@ class DataServiceTest {
       assertNotNull(result);
       assertEquals("test.png", result.filename());
     }
+
+    @Test
+    void test9_sendsAsyncEmailWithPresignedUrl() throws Exception {
+      var imageBytes = createTestImageBytes();
+      var file = new MockMultipartFile("file", "photo.jpeg", "image/jpeg", imageBytes);
+      var saved = new JData();
+      var id = UUID.randomUUID();
+      var now = Instant.now();
+      saved.setId(id);
+      saved.setFilename("photo.jpeg");
+      saved.setEmail("user@example.com");
+      saved.setCreatedAt(now);
+      var response =
+          new DataResponse(id, saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
+
+      when(s3Service.generateDownloadUrl(any())).thenReturn(MOCK_PRESIGNED_URL);
+      when(dataRepository.save(any())).thenReturn(saved);
+      when(dataMapper.toResponse(saved)).thenReturn(response);
+
+      dataService.submitImageData(file, "user@example.com");
+
+      verify(s3Service, times(2)).uploadBytes(any(), any(), any());
+      verify(s3Service).generateDownloadUrl(any());
+      verify(eventProducer).accept(eventCaptor.capture());
+
+      var events = eventCaptor.getValue();
+      assertEquals(1, events.size());
+
+      var event = (SendEmailRequested) events.iterator().next();
+      assertEquals("user@example.com", event.getTo());
+      assertEquals("Your Image Processing Result", event.getSubject());
+      assertTrue(event.getHtmlBody().contains(MOCK_PRESIGNED_URL.toString()));
+      assertNull(event.getAttachments());
+    }
+
+    @Test
+    void test10_uploadsOriginalAndGrayscaleToS3() {
+      var imageBytes = createTestImageBytes();
+      var file = new MockMultipartFile("file", "photo.jpeg", "image/jpeg", imageBytes);
+      var saved = new JData();
+      saved.setId(UUID.randomUUID());
+      saved.setFilename("photo.jpeg");
+      saved.setEmail("user@example.com");
+      saved.setCreatedAt(Instant.now());
+      var response =
+          new DataResponse(
+              saved.getId(), saved.getFilename(), saved.getEmail(), saved.getCreatedAt());
+
+      when(s3Service.generateDownloadUrl(any())).thenReturn(MOCK_PRESIGNED_URL);
+      doNothing().when(eventProducer).accept(any());
+      when(dataRepository.save(any())).thenReturn(saved);
+      when(dataMapper.toResponse(saved)).thenReturn(response);
+
+      dataService.submitImageData(file, "user@example.com");
+
+      verify(s3Service, times(2))
+          .uploadBytes(uploadCaptor.capture(), any(), any());
+
+      var keys = uploadCaptor.getAllValues();
+      assertEquals(2, keys.size());
+      assertTrue(keys.get(0).contains("original"));
+      assertTrue(keys.get(1).contains("grayscale"));
+    }
   }
 
   @Nested
@@ -90,7 +195,7 @@ class DataServiceTest {
 
     @Test
     void test3_emailBlank_throwsUnprocessable() {
-      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
+      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", createTestImageBytes());
 
       var ex =
           assertThrows(
@@ -134,7 +239,7 @@ class DataServiceTest {
 
     @Test
     void test7_invalidEmail_throwsUnprocessable() {
-      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", "content".getBytes());
+      var file = new MockMultipartFile("file", "test.jpeg", "image/jpeg", createTestImageBytes());
 
       var ex =
           assertThrows(
@@ -146,7 +251,7 @@ class DataServiceTest {
     @Test
     void test8_filenameTooLong_throwsUnprocessable() {
       var longName = "f".repeat(101) + ".png";
-      var file = new MockMultipartFile("file", longName, "image/png", "content".getBytes());
+      var file = new MockMultipartFile("file", longName, "image/png", createTestImageBytes());
 
       var ex =
           assertThrows(
