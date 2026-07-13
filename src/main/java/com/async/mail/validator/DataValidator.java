@@ -40,7 +40,7 @@ public class DataValidator {
     if (filename == null || filename.isBlank()) {
       throw new UnprocessableEntityException("file must have a valid filename.");
     }
-    
+
     if (filename.length() > 100) {
       throw new UnprocessableEntityException("filename must not exceed 100 characters.");
     }

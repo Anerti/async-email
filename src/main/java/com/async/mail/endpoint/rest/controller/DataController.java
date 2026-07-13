@@ -18,9 +18,7 @@ public class DataController {
 
   @PostMapping("/data")
   public ResponseEntity<DataResponse> submitImageData(
-      @RequestParam("file") MultipartFile file,
-      @RequestParam("email") String email) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(dataService.submitImageData(file, email));
+      @RequestParam("file") MultipartFile file, @RequestParam("email") String email) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(dataService.submitImageData(file, email));
   }
 }
