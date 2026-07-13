@@ -2,11 +2,14 @@ package com.async.mail.service;
 
 import com.async.mail.endpoint.event.EventProducer;
 import com.async.mail.endpoint.event.model.SendEmailRequested;
+import com.async.mail.endpoint.rest.controller.dto.DataListResponse;
 import com.async.mail.endpoint.rest.controller.dto.DataResponse;
+import com.async.mail.endpoint.rest.controller.dto.Meta;
 import com.async.mail.mapper.DataMapper;
 import com.async.mail.repository.JDataRepository;
 import com.async.mail.repository.model.JData;
 import com.async.mail.validator.DataValidator;
+import com.async.mail.validator.GeneralValidator;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,6 +47,7 @@ public class DataService {
   private final JDataRepository dataRepository;
   private final DataMapper dataMapper;
   private final DataValidator dataValidator;
+  private final GeneralValidator generalValidator;
   private final S3Service s3Service;
   private final EventProducer<SendEmailRequested> eventProducer;
 
@@ -71,6 +75,22 @@ public class DataService {
     return filename != null && filename.contains(".")
         ? filename.substring(filename.lastIndexOf('.') + 1)
         : "png";
+  }
+
+  public DataListResponse listImageData(String email, String filename, int page, int size) {
+    generalValidator.validateEmail(email);
+    generalValidator.validateString("filename", filename);
+
+    int offset = (page - 1) * size;
+
+    List<DataResponse> data =
+        dataRepository.findFiltered(email, filename, offset, size).stream()
+            .map(dataMapper::toResponse)
+            .toList();
+
+    long total = dataRepository.countFiltered(email, filename);
+
+    return new DataListResponse(data.isEmpty() ? null : data, new Meta(page, size, total));
   }
 
   public DataResponse submitImageData(MultipartFile file, String email) {
