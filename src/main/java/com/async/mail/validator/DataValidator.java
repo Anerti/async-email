@@ -13,7 +13,7 @@ public class DataValidator {
 
   private final GeneralValidator generalValidator;
 
-  public String validateSubmit(MultipartFile file, String email) {
+  public void validateSubmit(MultipartFile file, String email) {
     if (email == null || email.isBlank()) {
       throw new UnprocessableEntityException("email is required.");
     }
@@ -22,6 +22,7 @@ public class DataValidator {
     if (file == null || file.isEmpty()) {
       throw new UnprocessableEntityException("file is required and cannot be empty.");
     }
+
     if (file.getSize() > MAX_FILE_SIZE) {
       throw new UnprocessableEntityException("file must not exceed 10 MB.");
     }
@@ -43,6 +44,5 @@ public class DataValidator {
     if (filename.length() > 100) {
       throw new UnprocessableEntityException("filename must not exceed 100 characters.");
     }
-    return filename;
   }
 }
