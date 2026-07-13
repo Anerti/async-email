@@ -40,6 +40,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/courses")
                     .permitAll()
+                    .requestMatchers("/data")
+                    .permitAll()
                     .requestMatchers("/users/*/courses/*")
                     .hasRole("CUSTOMER")
                     .anyRequest()

@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -108,7 +109,7 @@ public class GlobalExceptionHandler {
         .body(
             ErrorBody.builder()
                 .error("INTERNAL_ERROR")
-                .message("Something went wrong")
+                .message("Something went wrong: " + ex.getMessage())
                 .status(status.value())
                 .build());
   }
@@ -157,6 +158,18 @@ public class GlobalExceptionHandler {
         .body(
             ErrorBody.builder()
                 .error("FORBIDDEN")
+                .message(ex.getMessage())
+                .status(status.value())
+                .build());
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorBody> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+    HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+    return ResponseEntity.status(status)
+        .body(
+            ErrorBody.builder()
+                .error("UNPROCESSABLE_ENTITY")
                 .message(ex.getMessage())
                 .status(status.value())
                 .build());

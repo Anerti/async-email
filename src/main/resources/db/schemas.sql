@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS user_course (
     subscribed_at  TIMESTAMP DEFAULT now(),
     UNIQUE (user_id, course_id)
 );
+
+CREATE TABLE IF NOT EXISTS data (
+    id          UUID PRIMARY KEY,
+    filename    VARCHAR(100) NOT NULL,
+    email       VARCHAR(100) NOT NULL,
+    created_at  TIMESTAMP DEFAULT now()
+);
