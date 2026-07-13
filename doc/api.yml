@@ -101,6 +101,102 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorBody'
 
+  /data:
+    get:
+      summary: List all submitted image data with pagination
+      operationId: listImageData
+      tags: [Data]
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+            format: email
+          description: Filter by email (exact match)
+        - name: filename
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by filename (partial match)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number (1-indexed)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of images per page
+      responses:
+        '200':
+          description: Paginated list of image records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageListResponse'
+        '400':
+          description: Bad request — invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '422':
+          description: Unprocessable entity — validation error on filter values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
+    post:
+      summary: Submit an image for processing (JPEG or PNG)
+      operationId: submitImageData
+      tags: [Data]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, email]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPEG or PNG)
+                email:
+                  type: string
+                  format: email
+                  description: Email to receive the processed image link
+      responses:
+        '201':
+          description: Image submitted and record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageResponse'
+        '400':
+          description: Invalid input — unsupported format or missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '422':
+          description: Unprocessable entity — validation error on submitted data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
   /courses:
     get:
       summary: List all available courses with optional filters
@@ -301,6 +397,32 @@ components:
         price:
           type: number
           format: double
+
+    ImageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    ImageListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
 
     ErrorBody:
       type: object
