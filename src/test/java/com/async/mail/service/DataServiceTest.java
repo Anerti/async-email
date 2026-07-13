@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +39,6 @@ class DataServiceTest {
   @Mock S3Service s3Service;
   @Mock EventProducer<SendEmailRequested> eventProducer;
 
-  @Captor ArgumentCaptor<JData> dataCaptor;
   @Captor @SuppressWarnings("rawtypes") ArgumentCaptor<Collection> eventCaptor;
   @Captor ArgumentCaptor<String> uploadCaptor;
 

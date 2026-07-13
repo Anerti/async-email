@@ -44,11 +44,6 @@ public class S3Service {
     return uploadBytes(key, pdfContent, "application/pdf");
   }
 
-  public String uploadQrCode(UUID userId, UUID courseId, byte[] pngContent) {
-    var key = String.format("qrcodes/%s/%s/%d.png", userId, courseId, System.currentTimeMillis());
-    return uploadBytes(key, pngContent, "image/png");
-  }
-
   public URL generateDownloadUrl(String key) {
     var getObjectRequest = GetObjectRequest.builder().bucket(invoiceBucket).key(key).build();
     var presignRequest =
