@@ -166,11 +166,17 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MaxUploadSizeExceededException.class)
   public ResponseEntity<ErrorBody> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
     HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+    String message;
+    if (ex.getMaxUploadSize() > 0) {
+      message = "file must not exceed " + (ex.getMaxUploadSize() / (1024 * 1024)) + " MB.";
+    } else {
+      message = "file size exceeds the maximum allowed limit.";
+    }
     return ResponseEntity.status(status)
         .body(
             ErrorBody.builder()
                 .error("UNPROCESSABLE_ENTITY")
-                .message("file must not exceed 10 MB.")
+                .message(message)
                 .status(status.value())
                 .build());
   }
