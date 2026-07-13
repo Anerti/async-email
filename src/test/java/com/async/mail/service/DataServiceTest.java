@@ -39,6 +39,8 @@ class DataServiceTest {
   @Mock S3Service s3Service;
   @Mock EventProducer<SendEmailRequested> eventProducer;
 
+  private final GeneralValidator generalValidator = new GeneralValidator();
+
   @Captor
   @SuppressWarnings("rawtypes")
   ArgumentCaptor<Collection> eventCaptor;
@@ -74,7 +76,8 @@ class DataServiceTest {
         new DataService(
             dataRepository,
             dataMapper,
-            new DataValidator(new GeneralValidator()),
+            new DataValidator(generalValidator),
+            generalValidator,
             s3Service,
             eventProducer);
   }
